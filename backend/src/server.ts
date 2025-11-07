@@ -17,7 +17,6 @@ const app: Express = express();
 
 // Middlewares
 app.use(express.json());
-
 app.use("/api", profissionalRoutes);
 
 // Rota de teste
