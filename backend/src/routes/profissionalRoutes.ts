@@ -1,15 +1,22 @@
 // backend/src/routes/profissionalRoutes.ts
 
-import { Router } from "express"; // Importa apenas a classe Router do Express
-import { createProfissional, loginProfissional } from "../controllers/profissionalController.js"; // Importa a função do nosso Controller
+import { Router } from "express";
+// 1. IMPORTAÇÃO DOS CONTROLLERS (createProfissional, loginProfissional, getAllProfissionais)
+import { createProfissional, loginProfissional, getAllProfissionais } from "../controllers/profissionalController";
 
-// Tipagem: Cria uma instância do roteador
-const router: Router = Router();
+// 2. IMPORTAÇÃO DO MIDDLEWARE
+import { protect } from "../middlewares/authMiddleware"; 
+
+const router = Router();
 
 // Rota POST para criar um novo profissional
-// URL final será: /api/profissionais
-router.post("/profissionais", createProfissional);
-router.post("/login", loginProfissional);
+router.post('/profissionais', createProfissional);
 
-// Exporta o router para que o server.ts possa utilizá-lo
+// Rota GET PROTEGIDA para listar profissionais
+router.get('/profissionais', protect, getAllProfissionais); 
+
+// Rota POST para login
+router.post('/login', loginProfissional);
+
+// Exporta o router
 export default router;
