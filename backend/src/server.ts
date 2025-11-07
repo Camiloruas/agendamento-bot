@@ -3,6 +3,7 @@
 // Tipagem: Importamos Express, mas também os tipos específicos Express e Request/Response
 import * as dotenv from "dotenv";
 import express, { Express, Request, Response } from "express";
+import profissionalRoutes from "./routes/profissionalRoutes.js";
 
 // O '.js' é obrigatório no NodeNext/tsx, mesmo que o arquivo seja .ts
 import { sequelize, testConnection } from "./database/connection.js";
@@ -16,6 +17,8 @@ const app: Express = express();
 
 // Middlewares
 app.use(express.json());
+
+app.use("/api", profissionalRoutes);
 
 // Rota de teste
 // Tipagem: Especificamos que o req é do tipo Request e o res é do tipo Response
