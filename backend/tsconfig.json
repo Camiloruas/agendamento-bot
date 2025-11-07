@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    // Layout
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    // Módulos Node Modernos (Correto)
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+    "target": "ES2022",
+
+    // Tipagem do Ambiente (A CORREÇÃO)
+    "types": ["node"], // Adiciona os tipos globais do Node.js
+    "esModuleInterop": true,
+
+    // Qualidade de Código (Manter é ótimo!)
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+
+    // Outras
+    "skipLibCheck": true
+
+    // Estas podem ser removidas/comentadas por enquanto:
+    // "jsx": "react-jsx",
+    // "verbatimModuleSyntax": true,
+    // "isolatedModules": true,
+  }
+}

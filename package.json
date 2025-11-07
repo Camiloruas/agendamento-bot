@@ -1,0 +1,39 @@
+{
+  "name": "agendamento-bot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "TS_NODE_PROJECT=backend/tsconfig.json tsx watch backend/src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Camiloruas/agendamento-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Camiloruas/agendamento-bot/issues"
+  },
+  "homepage": "https://github.com/Camiloruas/agendamento-bot#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "mysql2": "^3.15.3",
+    "sequelize": "^6.37.7"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.5",
+    "@types/node": "^24.10.0",
+    "@types/sequelize": "^4.28.20",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}
