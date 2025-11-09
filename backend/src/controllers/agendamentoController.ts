@@ -7,32 +7,31 @@ import Profissional from "../models/Profissional";
 // A rota só será acessível por um usuário autenticado (middleware protect)
 // Usamos AuthRequest para garantir que 'userId' existe.
 export const createAgendamento = async (req: AuthRequest, res: Response): Promise<Response> => {
-  // 1. Extrai o ID do Profissional da requisição (injetado pelo middleware protect)
+  // 1. Extrai os dados da requisição
   const profissionalId = req.userId;
-  const { dataHora, descricao } = req.body;
+  const { dataHora, descricao, clienteId } = req.body; // CORRIGIDO: clienteId adicionado
 
-  // 2. Validação Básica
-  if (!dataHora) {
+  // 2. Validação dos Dados
+  if (!dataHora || !clienteId) { // CORRIGIDO: Validação para clienteId
     return res.status(400).json({
-      message: "Erro: A data e hora do agendamento são obrigatórios.",
+      message: "Erro: A data, hora e o ID do cliente são obrigatórios.",
     });
   }
 
-  // 3. Validação do ID (redundante, mas seguro)
   if (!profissionalId) {
-    // Isso não deve acontecer se o middleware estiver correto
     return res.status(401).json({ message: "Profissional não autenticado." });
   }
 
   try {
-    // 4. Criação do Agendamento
+    // 3. Criação do Agendamento
     const novoAgendamento = await Agendamento.create({
       dataHora,
-      descricao: descricao || "Agendamento padrão", // Usa valor padrão se a descrição for vazia
-      profissionalId, // <--- CHAVE: Conecta o agendamento ao usuário logado
+      descricao: descricao || "Agendamento padrão",
+      profissionalId,
+      clienteId, // CORRIGIDO: clienteId incluído na criação
     });
 
-    // 5. Retorna a resposta de sucesso
+    // 4. Retorna a resposta de sucesso
     return res.status(201).json({
       message: "Agendamento criado com sucesso.",
       agendamento: {
@@ -40,6 +39,7 @@ export const createAgendamento = async (req: AuthRequest, res: Response): Promis
         dataHora: novoAgendamento.dataHora,
         descricao: novoAgendamento.descricao,
         profissionalId: novoAgendamento.profissionalId,
+        clienteId: novoAgendamento.clienteId, // CORRIGIDO: Retorna o clienteId
       },
     });
   } catch (error) {

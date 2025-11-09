@@ -68,7 +68,7 @@ async function startServer() {
 
   // Sincroniza os modelos (cria/altera tabelas conforme necessário)
   // { force: true } recria as tabelas. Use com cuidado em produção.
-  await sequelize.sync({ force: true });
+  await sequelize.sync();
   console.log("[DB] Banco de dados sincronizado com sucesso!");
 
   app.listen(PORT, () => {

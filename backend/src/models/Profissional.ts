@@ -15,8 +15,15 @@ export interface ProfissionalAttributes {
 export interface ProfissionalCreationAttributes extends Optional<ProfissionalAttributes, "id" | "createdAt" | "updatedAt"> {}
 
 // 3. Classe do Modelo (A Implementação do Sequelize)
-// **CORREÇÃO PERMANENTE:** Classe vazia para evitar shadowing.
 export class Profissional extends Model<ProfissionalAttributes, ProfissionalCreationAttributes> {
+    // Usamos 'declare' para informar ao TypeScript sobre os campos, sem interferir no Sequelize.
+    declare id: string;
+    declare nome: string;
+    declare email: string;
+    declare senha: string;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
+
     public static initialize(sequelize: Sequelize): void {
         Profissional.init(
             {
@@ -63,11 +70,6 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
         });
     }
 }
-
-// NOVIDADE: Define o tipo da instância que o Sequelize retorna (Métodos + Atributos).
-// Isso resolve o erro de tipagem no Controller.
-export type ProfissionalInstance = Profissional & ProfissionalAttributes;
-
 
 // Exportamos o modelo final
 export default Profissional;

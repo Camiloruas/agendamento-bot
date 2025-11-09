@@ -17,21 +17,21 @@ export interface AgendamentoAttributes {
 export interface AgendamentoCreationAttributes extends Optional<AgendamentoAttributes, "id" | "descricao"> {}
 
 // 3. Classe do Modelo
-// O ': string | null' na linha 19 agora corresponde ao ': string | null' na linha 12
-export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreationAttributes> implements AgendamentoAttributes {
-  public id!: string;
-  public dataHora!: Date;
-  public descricao!: string | null; // CORRIGIDO: Usa string | null
-  public profissionalId!: string;
-  public clienteId!: string;
+export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreationAttributes> {
+  // Usamos 'declare' para informar ao TypeScript sobre os campos, sem interferir no Sequelize.
+  declare id: string;
+  declare dataHora: Date;
+  declare descricao: string | null;
+  declare profissionalId: string;
+  declare clienteId: string;
 
-  public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
+  declare readonly createdAt: Date;
+  declare readonly updatedAt: Date;
 
   // Mixins de associação para o TypeScript
-  public getCliente!: BelongsToGetAssociationMixin<Cliente>;
-  public readonly cliente?: Cliente;
-  public readonly profissional?: Profissional;
+  declare getCliente: BelongsToGetAssociationMixin<Cliente>;
+  declare readonly cliente?: Cliente;
+  declare readonly profissional?: Profissional;
 
   public static initialize(sequelize: Sequelize): void {
     Agendamento.init(
@@ -55,7 +55,7 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
           type: DataTypes.UUID,
           allowNull: false,
         },
-        // Apenas definimos a coluna. A relação é feita no 'associate'.
+        // Apenas definimos a coluna. A relação é feita no 'associate".
         clienteId: {
           type: DataTypes.UUID,
           allowNull: false,
