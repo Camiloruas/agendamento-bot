@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "TS_NODE_PROJECT=backend/tsconfig.json tsx watch backend/src/server.ts",
+    "dev": "rm -rf node_modules/.cache && TS_NODE_PROJECT=backend/tsconfig.json tsx watch backend/src/server.ts",
     "start": "node dist/server.js",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"

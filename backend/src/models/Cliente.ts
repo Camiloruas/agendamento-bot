@@ -11,14 +11,15 @@ export interface ClienteAttributes {
 interface ClienteCreationAttributes extends Optional<ClienteAttributes, 'id'> {}
 
 // Classe do Modelo Cliente
-export class Cliente extends Model<ClienteAttributes, ClienteCreationAttributes> implements ClienteAttributes {
-    public id!: string;
-    public nome!: string;
-    public telefone!: string;
+export class Cliente extends Model<ClienteAttributes, ClienteCreationAttributes> {
+    // Usamos 'declare' para informar ao TypeScript sobre os campos, sem interferir no Sequelize.
+    declare id: string;
+    declare nome: string;
+    declare telefone: string;
 
     // Timestamps adicionados automaticamente pelo Sequelize
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    declare readonly createdAt: Date;
+    declare readonly updatedAt: Date;
 
     public static initialize(sequelize: Sequelize): void {
         Cliente.init({
