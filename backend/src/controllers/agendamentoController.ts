@@ -4,6 +4,7 @@ import { DatabaseError } from "sequelize";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import Agendamento from "../models/Agendamento";
 import Profissional from "../models/Profissional";
+import Cliente from "../models/Cliente"; // Adicione esta linha
 // A rota só será acessível por um usuário autenticado (middleware protect)
 // Usamos AuthRequest para garantir que 'userId' existe.
 export const createAgendamento = async (req: AuthRequest, res: Response): Promise<Response> => {

@@ -1,7 +1,8 @@
 // backend/src/controllers/profissionalController.ts
 
 import { Request, Response } from "express";
-import Profissional, { ProfissionalInstance } from "../models/Profissional";
+import Profissional from "../models/Profissional";
+import ProfissionalInstance from "../models/Profissional";
 import { DatabaseError } from "sequelize";
 import * as bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
