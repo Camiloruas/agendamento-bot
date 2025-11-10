@@ -23,7 +23,18 @@ export const createAgendamento = async (req: AuthRequest, res: Response): Promis
   }
 
   try {
-    // 3. Criação do Agendamento
+    // 3. VERIFICAÇÃO: Garante que o cliente e o profissional existem
+    const cliente = await Cliente.findByPk(clienteId);
+    if (!cliente) {
+      return res.status(404).json({ message: "Cliente não encontrado." });
+    }
+
+    const profissional = await Profissional.findByPk(profissionalId);
+    if (!profissional) {
+      return res.status(404).json({ message: "Profissional não encontrado." });
+    }
+
+    // 4. Criação do Agendamento
     const novoAgendamento = await Agendamento.create({
       dataHora,
       descricao: descricao || "Agendamento padrão",
@@ -31,7 +42,7 @@ export const createAgendamento = async (req: AuthRequest, res: Response): Promis
       clienteId, // CORRIGIDO: clienteId incluído na criação
     });
 
-    // 4. Retorna a resposta de sucesso
+    // 5. Retorna a resposta de sucesso
     return res.status(201).json({
       message: "Agendamento criado com sucesso.",
       agendamento: {
@@ -67,8 +78,11 @@ export const getAllAgendamentos = async (req: AuthRequest, res: Response): Promi
       where: {
         profissionalId: profissionalId, // <--- CHAVE DA FILTRAGEM
       },
-      // Inclui o nome do Profissional na resposta (opcional, mas útil)
-      include: [{ model: Profissional, attributes: ["id", "nome", "email"] }],
+      // Inclui os dados do Profissional e do Cliente na resposta
+      include: [
+        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email"] },
+        { model: Cliente, as: 'cliente', attributes: ["id", "nome", "telefone"] }
+      ],
       order: [["dataHora", "ASC"]], // Ordena por data e hora
     });
 
@@ -97,7 +111,10 @@ export const getAgendamentoById = async (req: AuthRequest, res: Response): Promi
         id: id,
         profissionalId: profissionalId, // CHAVE: Garante que só verá o seu agendamento
       },
-      include: [{ model: Profissional, attributes: ["id", "nome", "email"] }],
+      include: [
+        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email"] },
+        { model: Cliente, as: 'cliente', attributes: ["id", "nome", "telefone"] }
+      ],
     });
 
     if (!agendamento) {
@@ -178,7 +195,10 @@ export const updateAgendamento = async (req: AuthRequest, res: Response): Promis
 
     // 2. Busca e retorna o agendamento atualizado para confirmação (opcional, mas recomendado)
     const agendamentoAtualizado = await Agendamento.findByPk(id, {
-      include: [{ model: Profissional, attributes: ["id", "nome", "email"] }],
+      include: [
+        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email"] },
+        { model: Cliente, as: 'cliente', attributes: ["id", "nome", "telefone"] }
+      ],
     });
 
     return res.status(200).json({
