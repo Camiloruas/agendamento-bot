@@ -43,6 +43,14 @@ export class Cliente extends Model<ClienteAttributes, ClienteCreationAttributes>
             timestamps: true,
         });
     }
+
+    // Define a associação com Agendamento
+    public static associate(models: any): void {
+        this.hasMany(models.Agendamento, {
+            foreignKey: 'clienteId',
+            as: 'agendamentos',
+        });
+    }
 }
 
 // Interface do modelo Cliente para uso externo

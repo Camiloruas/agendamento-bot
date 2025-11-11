@@ -4,7 +4,8 @@ import { Router } from "express";
 import { protect } from "../middlewares/authMiddleware"; // Proteção para garantir que só o bot acesse
 import { 
     getClienteByTelefone, 
-    createCliente 
+    createCliente,
+    getAllClientes // Importe a nova função
 } from "../controllers/clienteController"; 
 
 const router = Router();
@@ -15,5 +16,8 @@ router.get('/clientes', protect, getClienteByTelefone);
 
 // ROTA PROTEGIDA: POST /api/clientes (Cria um novo cliente após o bot coletar o nome)
 router.post('/clientes', protect, createCliente);
+
+// NOVA ROTA PROTEGIDA: GET /api/clientes/all (Busca todos os clientes)
+router.get('/clientes/all', protect, getAllClientes);
 
 export default router;

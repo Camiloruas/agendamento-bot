@@ -5,6 +5,7 @@ import express, { Express, Request, Response } from "express";
 import profissionalRoutes from "./routes/profissionalRoutes";
 import agendamentoRoutes from "./routes/agendamentoRoutes";
 import clienteRoutes from "./routes/clienteRoutes";
+import horarioRoutes from "./routes/horarioRoutes"; // Importa as novas rotas
 
 import sequelize, { testConnection } from "./database/connection";
 
@@ -12,6 +13,7 @@ import sequelize, { testConnection } from "./database/connection";
 import Profissional from "./models/Profissional";
 import Agendamento from "./models/Agendamento";
 import Cliente from "./models/Cliente";
+import HorarioProfissional from "./models/HorarioProfissional"; // Importa o novo modelo
 
 // --- NOVO: INTERFACE PARA TIPAR OS MODELOS NO LOOP ---
 // Define a estrutura mínima que esperamos dos modelos para o loop de inicialização.
@@ -19,7 +21,7 @@ interface ISequelizeModel {
     // CORREÇÃO: Usamos 'any' para evitar o erro de referência circular de tipo (ts(2502)).
     // O sequelize importado é do tipo correto, e a coerção 'as any' já protege a execução.
     initialize: (sequelize: any) => void;
-    associate?: () => void;
+    associate?: (models: any) => void; // Ajustado para aceitar modelos
 }
 // ----------------------------------------------------
 
@@ -33,6 +35,7 @@ app.use(express.json());
 app.use("/api", profissionalRoutes);
 app.use("/api", agendamentoRoutes);
 app.use("/api", clienteRoutes);
+app.use("/api", horarioRoutes); // Registra as novas rotas
 
 // Rota de teste
 app.get("/", (req: Request, res: Response) => {
@@ -42,24 +45,16 @@ app.get("/", (req: Request, res: Response) => {
 // Função de Inicialização do Servidor
 async function startServer() {
   // 1. INICIALIZAÇÃO DOS MODELOS
-  // Usa o 'as ISequelizeModel[]' para instruir o TypeScript de que
-    //, embora as classes de modelo sejam complexas, elas atendem à interface ISequelizeModel.
-    // O 'as any' em cada modelo é necessário para evitar conflitos de tipagem complexos do Sequelize.
-    const models: ISequelizeModel[] = [
-        Profissional as any, 
-        Cliente as any, 
-        Agendamento as any
-    ];
+  const models = { Profissional, Cliente, Agendamento, HorarioProfissional };
 
-  for (const model of models) {
+  for (const model of Object.values(models)) {
     model.initialize(sequelize);
   }
 
   // 2. CRIAÇÃO DAS ASSOCIAÇÕES
-  // O TypeScript agora aceita o '.associate()' devido à interface.
-  for (const model of models) {
+  for (const model of Object.values(models)) {
     if (typeof model.associate === "function") {
-      model.associate();
+      model.associate(models); // Passa todos os modelos para o método associate
     }
   }
 
@@ -68,7 +63,7 @@ async function startServer() {
 
   // Sincroniza os modelos (cria/altera tabelas conforme necessário)
   // { force: true } recria as tabelas. Use com cuidado em produção.
-  await sequelize.sync();
+  await sequelize.sync({ alter: true }); // Usar alter: true para evitar perda de dados
   console.log("[DB] Banco de dados sincronizado com sucesso!");
 
   app.listen(PORT, () => {

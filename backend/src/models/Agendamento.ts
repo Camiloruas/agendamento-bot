@@ -6,24 +6,25 @@ import Profissional from "./Profissional";
 export interface AgendamentoAttributes {
   id: string;
   dataHora: Date;
-  // CORRIGIDO: Agora aceita explicitamente 'string' ou 'null' (valor do banco de dados)
   descricao: string | null;
   profissionalId: string;
   clienteId: string;
+  servico: 'Corte' | 'Barba' | 'Corte + Barba';
+  status: 'Pendente' | 'Confirmado' | 'Cancelado';
 }
 
 // 2. Definição dos Atributos de Criação
-// Mantemos 'descricao' como opcional para a criação (não precisa ser fornecido no POST)
-export interface AgendamentoCreationAttributes extends Optional<AgendamentoAttributes, "id" | "descricao"> {}
+export interface AgendamentoCreationAttributes extends Optional<AgendamentoAttributes, "id" | "descricao" | "status"> {}
 
 // 3. Classe do Modelo
 export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreationAttributes> {
-  // Usamos 'declare' para informar ao TypeScript sobre os campos, sem interferir no Sequelize.
   declare id: string;
   declare dataHora: Date;
   declare descricao: string | null;
   declare profissionalId: string;
   declare clienteId: string;
+  declare servico: 'Corte' | 'Barba' | 'Corte + Barba';
+  declare status: 'Pendente' | 'Confirmado' | 'Cancelado';
 
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
@@ -48,17 +49,24 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
         },
         descricao: {
           type: DataTypes.STRING,
-          allowNull: true, // allowNull: true significa que o BD pode guardar NULL
+          allowNull: true,
         },
-        // Apenas definimos a coluna. A relação é feita no 'associate'.
         profissionalId: {
           type: DataTypes.UUID,
           allowNull: false,
         },
-        // Apenas definimos a coluna. A relação é feita no 'associate".
         clienteId: {
           type: DataTypes.UUID,
           allowNull: false,
+        },
+        servico: {
+            type: DataTypes.ENUM('Corte', 'Barba', 'Corte + Barba'),
+            allowNull: false,
+        },
+        status: {
+            type: DataTypes.ENUM('Pendente', 'Confirmado', 'Cancelado'),
+            defaultValue: 'Pendente',
+            allowNull: false,
         },
       },
       {
@@ -77,7 +85,6 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
-    // É importante que Profissional esteja importado para esta linha funcionar
     Profissional.hasMany(this, { foreignKey: "profissionalId", as: "agendamentos" });
 
     // Relação com Cliente
@@ -87,7 +94,6 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
-    // É importante que Cliente esteja importado para esta linha funcionar
     Cliente.hasMany(this, { foreignKey: "clienteId", as: "agendamentos" });
   }
 }
