@@ -62,3 +62,16 @@ export const createCliente = async (req: Request, res: Response): Promise<Respon
         return res.status(500).json({ message: "Erro interno ao cadastrar cliente." });
     }
 };
+
+// 3. NOVA ROTA: Buscar todos os clientes
+export const getAllClientes = async (req: Request, res: Response): Promise<Response> => {
+    try {
+        const clientes = await Cliente.findAll({
+            attributes: ['id', 'nome', 'telefone', 'createdAt', 'updatedAt'] // Excluir campos sensíveis se houver
+        });
+        return res.status(200).json(clientes);
+    } catch (error) {
+        console.error("Erro ao buscar todos os clientes:", error);
+        return res.status(500).json({ message: "Erro interno ao buscar clientes." });
+    }
+};

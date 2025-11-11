@@ -69,6 +69,18 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
             profissional.senha = hashedPassword;
         });
     }
+
+    // Define as associações
+    public static associate(models: any): void {
+        this.hasMany(models.Agendamento, {
+            foreignKey: 'profissionalId',
+            as: 'agendamentos',
+        });
+        this.hasMany(models.HorarioProfissional, {
+            foreignKey: 'profissionalId',
+            as: 'horarios',
+        });
+    }
 }
 
 // Exportamos o modelo final
