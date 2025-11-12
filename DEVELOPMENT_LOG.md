@@ -133,3 +133,14 @@ Este arquivo documenta o progresso, as decisões e as tarefas realizadas no dese
 **Próximo Passo:** Continuar com a implementação da lógica de "Verifica se já possui agendamento ativo" para o cliente.
 
 ---
+
+### **11 de Novembro de 2025**
+
+**Objetivo:** Implementar a lógica de "Verifica se já possui agendamento ativo" para o cliente.
+
+**Alterações Realizadas:**
+-   **`backend/src/controllers/agendamentoController.ts`**: Adicionada a função `hasActiveAgendamento` para verificar se um cliente possui agendamentos ativos (pendentes ou confirmados, e futuros) com um profissional específico.
+-   **`backend/src/routes/agendamentoRoutes.ts`**: Adicionada a nova rota `GET /api/agendamentos/has-active-appointment/:clienteId`, protegida pelo middleware `protect`, que chama a função `hasActiveAgendamento`.
+
+**Próximos Passos:**
+-   Revisar o `booking-flow.md` para identificar quaisquer outras funcionalidades pendentes.

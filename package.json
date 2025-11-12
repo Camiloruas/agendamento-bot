@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "rm -rf node_modules/.cache && TS_NODE_PROJECT=backend/tsconfig.json tsx watch backend/src/server.ts",
     "start": "node dist/server.js",
-    "build": "tsc",
+    "build": "tsc -p backend/tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -39,3 +39,4 @@
     "typescript": "^5.9.3"
   }
 }
+

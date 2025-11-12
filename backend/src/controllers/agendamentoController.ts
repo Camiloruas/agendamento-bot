@@ -327,3 +327,39 @@ export const getAgendamentosByCliente = async (req: AuthRequest, res: Response):
     return res.status(500).json({ message: "Erro interno ao buscar agendamentos do cliente." });
   }
 };
+
+// NOVO: Função para verificar se um cliente possui agendamento ativo com um profissional
+export const hasActiveAgendamento = async (req: AuthRequest, res: Response): Promise<Response> => {
+  const profissionalId = req.userId; // ID do profissional autenticado
+  const { clienteId } = req.params; // ID do cliente vem da URL
+
+  if (!profissionalId) {
+    return res.status(401).json({ message: "Profissional não autenticado." });
+  }
+
+  if (!clienteId) {
+    return res.status(400).json({ message: "O ID do cliente é obrigatório." });
+  }
+
+  try {
+    const now = moment().toDate(); // Data e hora atuais
+
+    const activeAgendamento = await Agendamento.findOne({
+      where: {
+        clienteId: clienteId,
+        profissionalId: profissionalId,
+        status: {
+          [Op.in]: ['Pendente', 'Confirmado'], // Status de agendamento ativo
+        },
+        dataHora: {
+          [Op.gte]: now, // Agendamentos que ainda não passaram
+        },
+      },
+    });
+
+    return res.status(200).json({ hasActive: !!activeAgendamento });
+  } catch (error) {
+    console.error("Erro ao verificar agendamento ativo:", error);
+    return res.status(500).json({ message: "Erro interno ao verificar agendamento ativo." });
+  }
+};
