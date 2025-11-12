@@ -85,7 +85,6 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
-    Profissional.hasMany(this, { foreignKey: "profissionalId", as: "agendamentos" });
 
     // Relação com Cliente
     this.belongsTo(Cliente, {
@@ -94,7 +93,6 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
-    Cliente.hasMany(this, { foreignKey: "clienteId", as: "agendamentos" });
   }
 }
 
