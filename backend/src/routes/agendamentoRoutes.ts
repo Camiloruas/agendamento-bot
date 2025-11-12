@@ -7,7 +7,8 @@ import {
     deleteAgendamento, 
     updateAgendamento,
     getAvailableSlots, // Importe a nova função
-    getAgendamentosByCliente // Importe a nova função
+    getAgendamentosByCliente, // Importe a nova função
+    hasActiveAgendamento // Importe a nova função
 } from "../controllers/agendamentoController";
 
 const router = Router();
@@ -25,5 +26,8 @@ router.get("/agendamentos/available-slots", protect, getAvailableSlots);
 
 // NOVA ROTA PROTEGIDA: GET /api/agendamentos/cliente/:clienteId
 router.get("/agendamentos/cliente/:clienteId", protect, getAgendamentosByCliente);
+
+// NOVA ROTA PROTEGIDA: GET /api/agendamentos/has-active-appointment/:clienteId
+router.get("/agendamentos/has-active-appointment/:clienteId", protect, hasActiveAgendamento);
 
 export default router;
