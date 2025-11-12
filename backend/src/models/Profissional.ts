@@ -49,7 +49,7 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
             },
             {
                 sequelize, // A instância de conexão
-                tableName: "Profissionais", // Nome da tabela no banco de dados
+                tableName: "profissionais", // Nome da tabela no banco de dados
                 timestamps: true, // Mantém os campos createdAt e updatedAt
                 modelName: "Profissional",
             }
