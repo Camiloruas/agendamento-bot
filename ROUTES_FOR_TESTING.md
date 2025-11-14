@@ -6,13 +6,14 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ## 👨‍🔧 Rotas do Profissional (`/api/profissionais`)
 
-### `POST /api/profissionais/register`
+### `POST /profissionais/register`
 
 **Descrição:** Registra um novo profissional no sistema.
 
 **Autenticação:** Não Requerida
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "nome": "João da Silva",
@@ -30,6 +31,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Não Requerida
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "email": "joao.silva@example.com",
@@ -39,7 +41,17 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/profissionais/profile`
+### `GET /api/profissionais`
+
+**Descrição:** Recupera uma lista de todos os profissionais.
+
+**Autenticação:** Requerida (Bearer Token)
+
+**Corpo da Requisição (JSON):** Nenhum
+
+---
+
+### `GET /api/profissionais/profile` (Não funciona) - 404 Not Found
 
 **Descrição:** Recupera o perfil do profissional atualmente autenticado. Esta rota não está explicitamente definida nos arquivos fornecidos, mas é um padrão comum. Assumindo que ela existe e é protegida.
 
@@ -51,13 +63,14 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ## 👤 Rotas do Cliente (`/api/clientes`)
 
-### `POST /api/clientes`
+### `POST /clientes`
 
 **Descrição:** Cria um novo cliente. Esta rota é protegida e requer um profissional autenticado.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "nome": "Carlos Pereira",
@@ -67,7 +80,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes`
+### `GET /clientes/all`
 
 **Descrição:** Recupera uma lista de todos os clientes.
 
@@ -77,29 +90,32 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes/:id`
+### `GET /api/clientes/:id` (Não funciona) - 404 Not Found
 
 **Descrição:** Recupera um cliente específico pelo seu ID. Esta rota não está explicitamente definida, mas é uma prática padrão RESTful.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `id`: O UUID do cliente.
 
 **Corpo da Requisição (JSON):** Nenhum
 
 ---
 
-### `PUT /api/clientes/:id`
+### `PUT /api/clientes/:id` (Não funciona) - 404 Not Found
 
 **Descrição:** Atualiza as informações de um cliente específico. Esta rota não está explicitamente definida, mas é uma prática padrão RESTful.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `id`: O UUID do cliente.
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "nome": "Carlos Alberto Pereira",
@@ -109,13 +125,14 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `DELETE /api/clientes/:id`
+### `DELETE /api/clientes/:id` (Erro 404 Not Found{ "message": "Agendamento não encontrado ou acesso negado."})
 
 **Descrição:** Deleta um cliente específico pelo seu ID. Esta rota não está explicitamente definida, mas é uma prática padrão RESTful.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `id`: O UUID do cliente.
 
 **Corpo da Requisição (JSON):** Nenhum
@@ -129,6 +146,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Não Requerida (Com base no `clienteController.ts`)
 
 **Parâmetros de Consulta (Query):**
+
 - `telefone`: O número de telefone do cliente.
 
 **Corpo da Requisição (JSON):** Nenhum
@@ -156,6 +174,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
+
 ```json
 [
   {
@@ -194,6 +213,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "clienteId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
@@ -222,6 +242,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `id`: O UUID do agendamento.
 
 **Corpo da Requisição (JSON):** Nenhum
@@ -235,9 +256,11 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `id`: O UUID do agendamento.
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "dataHora": "2025-11-12T11:00:00.000Z",
@@ -255,6 +278,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `id`: O UUID do agendamento.
 
 **Corpo da Requisição (JSON):** Nenhum
@@ -268,6 +292,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Consulta (Query):**
+
 - `date`: A data para verificar os horários disponíveis (formato: `YYYY-MM-DD`).
 
 **Corpo da Requisição (JSON):** Nenhum
@@ -283,6 +308,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `clienteId`: O UUID do cliente.
 
 **Corpo da Requisição (JSON):** Nenhum
@@ -296,6 +322,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 **Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Caminho (Path):**
+
 - `clienteId`: O UUID do cliente.
 
 **Corpo da Requisição (JSON):** Nenhum

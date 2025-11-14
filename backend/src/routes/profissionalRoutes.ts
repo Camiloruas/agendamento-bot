@@ -10,13 +10,13 @@ import { protect } from "../middlewares/authMiddleware";
 const router = Router();
 
 // Rota POST para criar um novo profissional
-router.post('/profissionais', createProfissional);
+router.post('/profissionais/register', createProfissional);
 
 // Rota GET PROTEGIDA para listar profissionais
 router.get('/profissionais', protect, getAllProfissionais); 
 
 // Rota POST para login
-router.post('/login', loginProfissional);
+router.post('/profissionais/login', loginProfissional);
 
 // Exporta o router
 export default router;
