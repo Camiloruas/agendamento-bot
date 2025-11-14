@@ -2,7 +2,7 @@
 
 import { Router } from "express";
 // 1. IMPORTAÇÃO DOS CONTROLLERS (createProfissional, loginProfissional, getAllProfissionais)
-import { createProfissional, loginProfissional, getAllProfissionais } from "../controllers/profissionalController";
+import { createProfissional, loginProfissional, getAllProfissionais, getProfissionalProfile } from "../controllers/profissionalController";
 
 // 2. IMPORTAÇÃO DO MIDDLEWARE
 import { protect } from "../middlewares/authMiddleware"; 
@@ -17,6 +17,9 @@ router.get('/profissionais', protect, getAllProfissionais);
 
 // Rota POST para login
 router.post('/profissionais/login', loginProfissional);
+
+// Rota GET para buscar o perfil do profissional autenticado
+router.get('/profissionais/profile', protect, getProfissionalProfile);
 
 // Exporta o router
 export default router;

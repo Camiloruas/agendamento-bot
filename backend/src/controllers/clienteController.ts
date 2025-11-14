@@ -75,3 +75,65 @@ export const getAllClientes = async (req: Request, res: Response): Promise<Respo
         return res.status(500).json({ message: "Erro interno ao buscar clientes." });
     }
 };
+
+// 4. NOVA ROTA: Buscar um cliente por ID
+export const getClienteById = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+
+    try {
+        const cliente = await Cliente.findByPk(id);
+
+        if (!cliente) {
+            return res.status(404).json({ message: "Cliente não encontrado." });
+        }
+
+        return res.status(200).json(cliente);
+    } catch (error) {
+        console.error("Erro ao buscar cliente por ID:", error);
+        return res.status(500).json({ message: "Erro interno ao buscar cliente." });
+    }
+};
+
+// 5. NOVA ROTA: Atualizar um cliente por ID
+export const updateCliente = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+    const { nome, telefone } = req.body;
+
+    try {
+        const cliente = await Cliente.findByPk(id);
+
+        if (!cliente) {
+            return res.status(404).json({ message: "Cliente não encontrado." });
+        }
+
+        cliente.nome = nome || cliente.nome;
+        cliente.telefone = telefone || cliente.telefone;
+
+        await cliente.save();
+
+        return res.status(200).json({ message: "Cliente atualizado com sucesso.", cliente });
+    } catch (error) {
+        console.error("Erro ao atualizar cliente:", error);
+        return res.status(500).json({ message: "Erro interno ao atualizar cliente." });
+    }
+};
+
+// 6. NOVA ROTA: Deletar um cliente por ID
+export const deleteCliente = async (req: Request, res: Response): Promise<Response> => {
+    const { id } = req.params;
+
+    try {
+        const cliente = await Cliente.findByPk(id);
+
+        if (!cliente) {
+            return res.status(404).json({ message: "Cliente não encontrado." });
+        }
+
+        await cliente.destroy();
+
+        return res.status(200).json({ message: "Cliente deletado com sucesso." });
+    } catch (error) {
+        console.error("Erro ao deletar cliente:", error);
+        return res.status(500).json({ message: "Erro interno ao deletar cliente." });
+    }
+};

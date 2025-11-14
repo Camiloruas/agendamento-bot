@@ -1,23 +1,31 @@
 // backend/src/routes/clienteRoutes.ts
 
 import { Router } from "express";
-import { protect } from "../middlewares/authMiddleware"; // Proteção para garantir que só o bot acesse
+import { protect } from "../middlewares/authMiddleware";
 import { 
     getClienteByTelefone, 
     createCliente,
-    getAllClientes // Importe a nova função
+    getAllClientes,
+    getClienteById,
+    updateCliente,
+    deleteCliente
 } from "../controllers/clienteController"; 
 
 const router = Router();
 
-// ROTA PROTEGIDA: GET /api/clientes (Busca por telefone - Usado para verificar se o cliente já existe)
-// Nota: O bot enviará o token JWT e o telefone na query.
-router.get('/clientes', protect, getClienteByTelefone);
+// Rota para buscar um cliente pelo telefone (usado pelo bot)
+router.get('/clientes/by-phone', protect, getClienteByTelefone);
 
-// ROTA PROTEGIDA: POST /api/clientes (Cria um novo cliente após o bot coletar o nome)
+// Rota para criar um novo cliente
 router.post('/clientes', protect, createCliente);
 
-// NOVA ROTA PROTEGIDA: GET /api/clientes/all (Busca todos os clientes)
-router.get('/clientes/all', protect, getAllClientes);
+// Rota para obter todos los clientes
+router.get('/clientes', protect, getAllClientes);
+
+// Rota para obter, atualizar e deletar um cliente por ID
+router.route('/clientes/:id')
+    .get(protect, getClienteById)
+    "    .put(protect, updateCliente)
+    .delete(protect, deleteCliente);
 
 export default router;

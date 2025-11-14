@@ -144,3 +144,31 @@ Este arquivo documenta o progresso, as decisões e as tarefas realizadas no dese
 
 **Próximos Passos:**
 -   Revisar o `booking-flow.md` para identificar quaisquer outras funcionalidades pendentes.
+
+---
+
+### **13 de Novembro de 2025**
+
+**Objetivo:** Corrigir rotas com erro 404 e implementar funcionalidades ausentes com base no feedback do usuário.
+
+**Resumo das Alterações:**
+
+-   **Correção nas Rotas de Profissional (`/api/profissionais`):**
+    -   A rota de registro foi padronizada para `POST /api/profissionais/register`.
+    -   A rota de login foi padronizada para `POST /api/profissionais/login`.
+    -   Foi implementada a rota `GET /api/profissionais/profile`, que permite a um profissional autenticado buscar seu próprio perfil.
+    -   **Arquivos Modificados:** `backend/src/routes/profissionalRoutes.ts`, `backend/src/controllers/profissionalController.ts`.
+
+-   **Implementação e Correção das Rotas de Cliente (`/api/clientes`):**
+    -   Foram implementadas as rotas CRUD ausentes: `GET /api/clientes/:id`, `PUT /api/clientes/:id`, e `DELETE /api/clientes/:id`.
+    -   As funções de controller correspondentes (`getClienteById`, `updateCliente`, `deleteCliente`) foram criadas em `backend/src/controllers/clienteController.ts`.
+    -   Foi corrigido um bug na lógica de exclusão de cliente que retornava uma mensagem de erro incorreta.
+    -   As rotas de cliente foram reestruturadas para seguir melhores práticas REST, como o uso de `GET /api/clientes` para listar todos e `GET /api/clientes/by-phone` para buscas específicas.
+    -   **Arquivos Modificados:** `backend/src/routes/clienteRoutes.ts`, `backend/src/controllers/clienteController.ts`.
+
+-   **Atualização da Documentação (`ROUTES_FOR_TESTING.md`):**
+    -   O arquivo foi completamente revisado para remover os marcadores de erro.
+    -   Todas as rotas foram atualizadas para refletir os endpoints corretos e funcionais, incluindo os prefixos `/api`.
+    -   As descrições e exemplos foram ajustados para corresponder à funcionalidade atual da API.
+
+**Status:** Todas as rotas reportadas com erro foram corrigidas e a documentação foi sincronizada com o código.
