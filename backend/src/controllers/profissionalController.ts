@@ -6,6 +6,7 @@ import ProfissionalInstance from "../models/Profissional";
 import { DatabaseError } from "sequelize";
 import * as bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { AuthRequest } from "../middlewares/authMiddleware";
 
 export const createProfissional = async (req: Request, res: Response): Promise<Response> => {
   const { nome, email, senha } = req.body;
@@ -127,4 +128,25 @@ export const getAllProfissionais = async (req: Request, res: Response): Promise<
       message: "Erro interno do servidor ao listar profissionais.",
     });
   }
+};
+
+// --- NOVIDADE: FUNÇÃO getProfissionalProfile ADICIONADA E EXPORTADA ---
+export const getProfissionalProfile = async (req: Request, res: Response): Promise<Response> => {
+    const authReq = req as AuthRequest;
+    const profissionalId = authReq.userId;
+
+    try {
+        const profissional = await Profissional.findByPk(profissionalId, {
+            attributes: { exclude: ['senha'] } // Exclui a senha do retorno
+        });
+
+        if (!profissional) {
+            return res.status(404).json({ message: "Perfil do profissional não encontrado." });
+        }
+
+        return res.status(200).json(profissional);
+    } catch (error) {
+        console.error("Erro ao buscar perfil do profissional:", error);
+        return res.status(500).json({ message: "Erro interno ao buscar o perfil." });
+    }
 };

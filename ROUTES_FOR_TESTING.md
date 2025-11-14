@@ -6,7 +6,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ## 👨‍🔧 Rotas do Profissional (`/api/profissionais`)
 
-### `POST /profissionais/register`
+### `POST /api/profissionais/register`
 
 **Descrição:** Registra um novo profissional no sistema.
 
@@ -51,9 +51,9 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/profissionais/profile` (Não funciona) - 404 Not Found
+### `GET /api/profissionais/profile`
 
-**Descrição:** Recupera o perfil do profissional atualmente autenticado. Esta rota não está explicitamente definida nos arquivos fornecidos, mas é um padrão comum. Assumindo que ela existe e é protegida.
+**Descrição:** Recupera o perfil do profissional atualmente autenticado.
 
 **Autenticação:** Requerida (Bearer Token)
 
@@ -63,9 +63,9 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ## 👤 Rotas do Cliente (`/api/clientes`)
 
-### `POST /clientes`
+### `POST /api/clientes`
 
-**Descrição:** Cria um novo cliente. Esta rota é protegida e requer um profissional autenticado.
+**Descrição:** Cria um novo cliente.
 
 **Autenticação:** Requerida (Bearer Token)
 
@@ -80,7 +80,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /clientes/all`
+### `GET /api/clientes`
 
 **Descrição:** Recupera uma lista de todos os clientes.
 
@@ -90,9 +90,9 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes/:id` (Não funciona) - 404 Not Found
+### `GET /api/clientes/:id`
 
-**Descrição:** Recupera um cliente específico pelo seu ID. Esta rota não está explicitamente definida, mas é uma prática padrão RESTful.
+**Descrição:** Recupera um cliente específico pelo seu ID.
 
 **Autenticação:** Requerida (Bearer Token)
 
@@ -104,9 +104,9 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `PUT /api/clientes/:id` (Não funciona) - 404 Not Found
+### `PUT /api/clientes/:id`
 
-**Descrição:** Atualiza as informações de um cliente específico. Esta rota não está explicitamente definida, mas é uma prática padrão RESTful.
+**Descrição:** Atualiza as informações de um cliente específico.
 
 **Autenticação:** Requerida (Bearer Token)
 
@@ -125,9 +125,9 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `DELETE /api/clientes/:id` (Erro 404 Not Found{ "message": "Agendamento não encontrado ou acesso negado."})
+### `DELETE /api/clientes/:id`
 
-**Descrição:** Deleta um cliente específico pelo seu ID. Esta rota não está explicitamente definida, mas é uma prática padrão RESTful.
+**Descrição:** Deleta um cliente específico pelo seu ID.
 
 **Autenticação:** Requerida (Bearer Token)
 
@@ -139,11 +139,11 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes/by-phone/:telefone`
+### `GET /api/clientes/by-phone`
 
-**Descrição:** Recupera um cliente pelo seu número de telefone. A rota parece ser `/api/clientes?telefone=...` com base no controller, e não `/by-phone/:telefone`.
+**Descrição:** Recupera um cliente pelo seu número de telefone.
 
-**Autenticação:** Não Requerida (Com base no `clienteController.ts`)
+**Autenticação:** Requerida (Bearer Token)
 
 **Parâmetros de Consulta (Query):**
 
@@ -151,7 +151,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 **Corpo da Requisição (JSON):** Nenhum
 
-**Exemplo de URL:** `/api/clientes?telefone=5585912345678`
+**Exemplo de URL:** `/api/clientes/by-phone?telefone=5585912345678`
 
 ---
 
