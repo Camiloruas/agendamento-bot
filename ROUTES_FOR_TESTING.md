@@ -4,7 +4,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-## 👨‍🔧 Rotas do Profissional (`/api/profissionais`)
+## 👨‍🔧 Rotas do Profissional (`/api/profissionais`) -- Rota Testada - (Tudo OK )
 
 ### `POST /api/profissionais/register`
 
