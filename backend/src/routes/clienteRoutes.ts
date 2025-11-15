@@ -25,7 +25,7 @@ router.get('/clientes', protect, getAllClientes);
 // Rota para obter, atualizar e deletar um cliente por ID
 router.route('/clientes/:id')
     .get(protect, getClienteById)
-    "    .put(protect, updateCliente)
+        .put(protect, updateCliente)
     .delete(protect, deleteCliente);
 
 export default router;
