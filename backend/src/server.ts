@@ -31,11 +31,11 @@ const app: Express = express();
 // Middlewares
 app.use(express.json());
 
-// Rotas: Registra as rotas no Express com o prefixo /api
-app.use("/api", profissionalRoutes);
-app.use("/api", agendamentoRoutes);
-app.use("/api", clienteRoutes);
-app.use("/api", horarioRoutes); // Registra as novas rotas
+// Rotas: Registra as rotas no Express com prefixos específicos
+app.use("/api/profissionais", profissionalRoutes);
+app.use("/api/agendamentos", agendamentoRoutes);
+app.use("/api/clientes", clienteRoutes);
+app.use("/api/horarios", horarioRoutes);
 
 // Rota de teste
 app.get("/", (req: Request, res: Response) => {

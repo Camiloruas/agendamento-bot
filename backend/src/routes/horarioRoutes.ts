@@ -7,9 +7,9 @@ import { getHorarios, createOrUpdateHorarios } from "../controllers/horarioContr
 const router = Router();
 
 // ROTA PROTEGIDA: Para o profissional obter sua configuração de horários
-router.get("/horarios", protect, getHorarios);
+router.get("/", protect, getHorarios);
 
 // ROTA PROTEGIDA: Para o profissional criar ou atualizar sua configuração de horários
-router.post("/horarios", protect, createOrUpdateHorarios);
+router.post("/", protect, createOrUpdateHorarios);
 
 export default router;

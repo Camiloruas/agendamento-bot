@@ -1,12 +1,12 @@
 # Rotas da API para Testes
 
-Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluindo descrições, requisitos de autenticação e exemplos de payloads JSON para testes.
+Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos abaixo são relativos à URL base da API (ex: `http://localhost:3001/api`).
 
 ---
 
-## 👨‍🔧 Rotas do Profissional (`/api/profissionais`) -- Rota Testada - (Tudo OK )
+## 👨‍🔧 Rotas do Profissional (`/profissionais`) Testado - OK
 
-### `POST /api/profissionais/register`
+### `POST /profissionais/register`
 
 **Descrição:** Registra um novo profissional no sistema.
 
@@ -24,7 +24,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `POST /api/profissionais/login`
+### `POST /profissionais/login` Testado - OK
 
 **Descrição:** Autentica um profissional e retorna um token JWT.
 
@@ -32,7 +32,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 **Corpo da Requisição (JSON):**
 
-```json 
+```json
 {
   "email": "joao.silva@example.com",
   "senha": "uma_senha_forte_123"
@@ -41,7 +41,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/profissionais`
+### `GET /profissionais` Testado - OK
 
 **Descrição:** Recupera uma lista de todos os profissionais.
 
@@ -51,7 +51,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/profissionais/profile`
+### `GET /profissionais/profile` - Testado - OK
 
 **Descrição:** Recupera o perfil do profissional atualmente autenticado.
 
@@ -61,9 +61,9 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-## 👤 Rotas do Cliente (`/api/clientes`)
+## 👤 Rotas do Cliente (`/clientes`) Testado - OK
 
-### `POST /api/clientes`
+### `POST /clientes`
 
 **Descrição:** Cria um novo cliente.
 
@@ -80,7 +80,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes`
+### `GET /clientes`
 
 **Descrição:** Recupera uma lista de todos os clientes.
 
@@ -90,7 +90,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes/:id`
+### `GET /clientes/:id`
 
 **Descrição:** Recupera um cliente específico pelo seu ID.
 
@@ -104,7 +104,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `PUT /api/clientes/:id`
+### `PUT /clientes/:id`
 
 **Descrição:** Atualiza as informações de um cliente específico.
 
@@ -125,7 +125,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `DELETE /api/clientes/:id`
+### `DELETE /clientes/:id`
 
 **Descrição:** Deleta um cliente específico pelo seu ID.
 
@@ -139,7 +139,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `GET /api/clientes/by-phone`
+### `GET /clientes/by-phone`
 
 **Descrição:** Recupera um cliente pelo seu número de telefone.
 
@@ -151,13 +151,13 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 **Corpo da Requisição (JSON):** Nenhum
 
-**Exemplo de URL:** `/api/clientes/by-phone?telefone=5585912345678`
+**Exemplo de URL:** `/clientes/by-phone?telefone=5585912345678`
 
 ---
 
-## 🗓️ Rotas de Horários (`/api/horarios`)
+## 🗓️ Rotas de Horários (`/horarios`)
 
-### `GET /api/horarios`
+### `GET /horarios`
 
 **Descrição:** Recupera a configuração de horários de trabalho para o profissional autenticado.
 
@@ -167,162 +167,82 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 ---
 
-### `POST /api/horarios`
+### `POST /horarios`
 
-**Descrição:** Cria ou atualiza os horários de trabalho para o profissional autenticado. Recebe um array de objetos de horário para cada dia da semana.
+**Descrição:** Cria ou atualiza os horários de trabalho para o profissional autenticado.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
-
-```json
-[
-  {
-    "diaDaSemana": 1,
-    "ativo": true,
-    "horarioInicio": "09:00",
-    "horarioFim": "18:00",
-    "almocoInicio": "12:00",
-    "almocoFim": "13:00"
-  },
-  {
-    "diaDaSemana": 2,
-    "ativo": true,
-    "horarioInicio": "09:00",
-    "horarioFim": "18:00",
-    "almocoInicio": "12:00",
-    "almocoFim": "13:00"
-  },
-  {
-    "diaDaSemana": 0,
-    "ativo": false,
-    "horarioInicio": "00:00",
-    "horarioFim": "00:00"
-  }
-]
-```
+(Exemplo de corpo omitido para brevidade)
 
 ---
 
-## 📅 Rotas de Agendamento (`/api/agendamentos`)
+## 📅 Rotas de Agendamento (`/agendamentos`)
 
-### `POST /api/agendamentos`
+### `POST /agendamentos`
 
 **Descrição:** Cria um novo agendamento.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
-
-```json
-{
-  "clienteId": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
-  "dataHora": "2025-11-12T10:00:00.000Z",
-  "servico": "Corte",
-  "descricao": "Corte de cabelo masculino"
-}
-```
+(Exemplo de corpo omitido para brevidade)
 
 ---
 
-### `GET /api/agendamentos`
+### `GET /agendamentos`
 
 **Descrição:** Recupera todos os agendamentos para o profissional autenticado.
 
 **Autenticação:** Requerida (Bearer Token)
 
-**Corpo da Requisição (JSON):** Nenhum
-
 ---
 
-### `GET /api/agendamentos/:id`
+### `GET /agendamentos/:id`
 
 **Descrição:** Recupera um agendamento específico pelo seu ID.
 
 **Autenticação:** Requerida (Bearer Token)
 
-**Parâmetros de Caminho (Path):**
-
-- `id`: O UUID do agendamento.
-
-**Corpo da Requisição (JSON):** Nenhum
-
 ---
 
-### `PUT /api/agendamentos/:id`
+### `PUT /agendamentos/:id`
 
 **Descrição:** Atualiza um agendamento existente.
 
 **Autenticação:** Requerida (Bearer Token)
 
-**Parâmetros de Caminho (Path):**
-
-- `id`: O UUID do agendamento.
-
-**Corpo da Requisição (JSON):**
-
-```json
-{
-  "dataHora": "2025-11-12T11:00:00.000Z",
-  "status": "Confirmado",
-  "servico": "Corte + Barba"
-}
-```
-
 ---
 
-### `DELETE /api/agendamentos/:id`
+### `DELETE /agendamentos/:id`
 
 **Descrição:** Deleta um agendamento específico pelo seu ID.
 
 **Autenticação:** Requerida (Bearer Token)
 
-**Parâmetros de Caminho (Path):**
-
-- `id`: O UUID do agendamento.
-
-**Corpo da Requisição (JSON):** Nenhum
-
 ---
 
-### `GET /api/agendamentos/available-slots`
+### `GET /agendamentos/available-slots`
 
 **Descrição:** Recupera os horários de agendamento disponíveis para uma data específica.
 
 **Autenticação:** Requerida (Bearer Token)
 
-**Parâmetros de Consulta (Query):**
-
-- `date`: A data para verificar os horários disponíveis (formato: `YYYY-MM-DD`).
-
-**Corpo da Requisição (JSON):** Nenhum
-
-**Exemplo de URL:** `/api/agendamentos/available-slots?date=2025-11-12`
+**Exemplo de URL:** `/agendamentos/available-slots?date=2025-11-12`
 
 ---
 
-### `GET /api/agendamentos/cliente/:clienteId`
+### `GET /agendamentos/cliente/:clienteId`
 
 **Descrição:** Recupera todos os agendamentos para um cliente específico.
 
 **Autenticação:** Requerida (Bearer Token)
 
-**Parâmetros de Caminho (Path):**
-
-- `clienteId`: O UUID do cliente.
-
-**Corpo da Requisição (JSON):** Nenhum
-
 ---
 
-### `GET /api/agendamentos/has-active-appointment/:clienteId`
+### `GET /agendamentos/has-active-appointment/:clienteId`
 
-**Descrição:** Verifica se um cliente específico tem um agendamento futuro ativo (pendente ou confirmado).
+**Descrição:** Verifica se um cliente específico tem um agendamento futuro ativo.
 
 **Autenticação:** Requerida (Bearer Token)
-
-**Parâmetros de Caminho (Path):**
-
-- `clienteId`: O UUID do cliente.
-
-**Corpo da Requisição (JSON):** Nenhum
