@@ -80,7 +80,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /clientes`
+### `GET /clientes` Testado - OK
 
 **Descrição:** Recupera uma lista de todos os clientes.
 
@@ -90,7 +90,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /clientes/:id`
+### `GET /clientes/:id` Testado OK
 
 **Descrição:** Recupera um cliente específico pelo seu ID.
 
@@ -104,7 +104,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `PUT /clientes/:id`
+### `PUT /clientes/:id` Testado - OK
 
 **Descrição:** Atualiza as informações de um cliente específico.
 
@@ -125,7 +125,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `DELETE /clientes/:id`
+### `DELETE /clientes/:id` Testado - OK
 
 **Descrição:** Deleta um cliente específico pelo seu ID.
 
@@ -139,7 +139,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /clientes/by-phone`
+### `GET /clientes/by-phone` - Testado - OK
 
 **Descrição:** Recupera um cliente pelo seu número de telefone.
 
