@@ -32,7 +32,7 @@ Este arquivo documenta todas as rotas da API para o Bot de Agendamento, incluind
 
 **Corpo da Requisição (JSON):**
 
-```json
+```json 
 {
   "email": "joao.silva@example.com",
   "senha": "uma_senha_forte_123"
