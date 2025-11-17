@@ -172,3 +172,23 @@ Este arquivo documenta o progresso, as decisões e as tarefas realizadas no dese
     -   As descrições e exemplos foram ajustados para corresponder à funcionalidade atual da API.
 
 **Status:** Todas as rotas reportadas com erro foram corrigidas e a documentação foi sincronizada com o código.
+
+---
+
+### **16 de Novembro de 2025 - Correções e Melhorias**
+
+**Objetivo:** Abordar problemas de usabilidade e persistência de dados com base no feedback do usuário.
+
+**Alterações Realizadas:**
+-   **`ROUTES_FOR_TESTING.md`**:
+    -   Corrigidos os exemplos de corpo de requisição para as rotas `POST /horarios`, `POST /agendamentos` e `PUT /agendamentos/:id`, que estavam incompletos ou mal formatados.
+    -   Adicionada a indicação "Nenhum" para o corpo da requisição da rota `DELETE /agendamentos/:id`, pois esta rota não espera um corpo.
+-   **`backend/src/controllers/agendamentoController.ts`**:
+    -   Refatorada a função `getAvailableSlots` para corrigir um bug onde os horários disponíveis eram calculados com base na data atual do servidor, em vez da data solicitada pelo usuário.
+    -   Padronizado o uso de UTC (`moment.utc()`) em todas as operações de data e hora dentro de `getAvailableSlots` para garantir consistência e evitar problemas de fuso horário.
+    -   Melhorada a lógica de geração de slots, incluindo o tratamento correto de horários de almoço e a exclusão de slots já agendados.
+    -   A API agora retorna um array vazio (`[]`) com status `200 OK` quando não há horários de trabalho configurados para o dia, proporcionando uma melhor experiência ao cliente.
+-   **`backend/src/server.ts`**:
+    -   Alterada a opção de sincronização do Sequelize de `sequelize.sync({ force: true })` para `sequelize.sync({ alter: true })`. Esta mudança garante que o banco de dados não seja apagado e recriado a cada reinício do servidor, preservando os dados existentes e permitindo que o Sequelize altere as tabelas conforme necessário para corresponder aos modelos.
+
+**Status:** Problemas de formatação na documentação, cálculo de slots disponíveis e persistência de dados resolvidos.

@@ -62,8 +62,8 @@ async function startServer() {
   await testConnection();
 
   // Sincroniza os modelos (cria/altera tabelas conforme necessário)
-  // { force: true } recria as tabelas. Use com cuidado em produção.
-  await sequelize.sync({ force: true }); // Usar alter: true para evitar perda de dados
+  // { alter: true } compara o estado atual do banco de dados e aplica as alterações necessárias.
+  await sequelize.sync({ alter: true }); // alter: true evita a perda de dados.
   console.log("[DB] Banco de dados sincronizado com sucesso!");
 
   app.listen(PORT, () => {

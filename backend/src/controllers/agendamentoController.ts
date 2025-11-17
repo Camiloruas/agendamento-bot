@@ -221,7 +221,8 @@ export const getAvailableSlots = async (req: AuthRequest, res: Response): Promis
   }
 
   try {
-    const selectedDate = moment(date as string);
+    // Padroniza o tratamento de datas para UTC para evitar problemas com fuso horário
+    const selectedDate = moment.utc(date as string);
     const dayOfWeek = selectedDate.day(); // 0 (Domingo) a 6 (Sábado)
 
     // 1. Buscar a configuração de horário do profissional para o dia da semana
@@ -233,13 +234,15 @@ export const getAvailableSlots = async (req: AuthRequest, res: Response): Promis
       },
     });
 
+    // Se não houver configuração de horário, retorna uma lista vazia.
     if (!horarioConfig) {
-      return res.status(404).json({ message: "Profissional não trabalha neste dia ou não tem horário configurado." });
+      // Retornar 200 com array vazio é uma melhor experiência para o cliente da API
+      return res.status(200).json([]);
     }
 
-    // 2. Buscar agendamentos existentes para o profissional na data selecionada
-    const startOfDay = selectedDate.startOf('day').toDate();
-    const endOfDay = selectedDate.endOf('day').toDate();
+    // 2. Buscar agendamentos existentes para o profissional na data selecionada (em UTC)
+    const startOfDay = selectedDate.clone().startOf('day').toDate();
+    const endOfDay = selectedDate.clone().endOf('day').toDate();
 
     const existingAppointments = await Agendamento.findAll({
       where: {
@@ -254,31 +257,34 @@ export const getAvailableSlots = async (req: AuthRequest, res: Response): Promis
       attributes: ['dataHora'],
     });
 
-    const bookedTimes = existingAppointments.map(app => moment(app.dataHora).format('HH:mm'));
+    // Formata os horários agendados como 'HH:mm' em UTC
+    const bookedTimes = existingAppointments.map(app => moment.utc(app.dataHora).format('HH:mm'));
 
-    // 3. Gerar slots disponíveis
+    // 3. Gerar slots disponíveis (em UTC)
     const availableSlots: string[] = [];
-    let currentTime = moment(horarioConfig.horarioInicio, 'HH:mm');
-    const endTime = moment(horarioConfig.horarioFim, 'HH:mm');
-    const lunchStart = horarioConfig.almocoInicio ? moment(horarioConfig.almocoInicio, 'HH:mm') : null;
-    const lunchEnd = horarioConfig.almocoFim ? moment(horarioConfig.almocoFim, 'HH:mm') : null;
+    // Combina a data selecionada com a hora inicial e final, tratando como UTC
+    const currentTime = moment.utc(`${date} ${horarioConfig.horarioInicio}`, 'YYYY-MM-DD HH:mm');
+    const endTime = moment.utc(`${date} ${horarioConfig.horarioFim}`, 'YYYY-MM-DD HH:mm');
+    const lunchStart = horarioConfig.almocoInicio ? moment.utc(`${date} ${horarioConfig.almocoInicio}`, 'YYYY-MM-DD HH:mm') : null;
+    const lunchEnd = horarioConfig.almocoFim ? moment.utc(`${date} ${horarioConfig.almocoFim}`, 'YYYY-MM-DD HH:mm') : null;
 
+    // Itera sobre os horários do dia, de hora em hora
     while (currentTime.isBefore(endTime)) {
+      // Se o horário atual cair dentro da janela de almoço, avança o tempo para o fim do almoço
+      if (lunchStart && lunchEnd && currentTime.isBetween(lunchStart, lunchEnd, null, '[)')) {
+          currentTime = lunchEnd.clone();
+          continue; // Volta para o início do loop com o novo horário
+      }
+
       const slot = currentTime.format('HH:mm');
 
-      // Verifica se o slot está dentro do horário de trabalho
-      const isDuringWorkHours = currentTime.isSameOrAfter(moment(horarioConfig.horarioInicio, 'HH:mm')) &&
-                               currentTime.clone().add(59, 'minutes').isSameOrBefore(endTime); // Slot de 1h
-
-      // Verifica se o slot não está durante o almoço
-      const isDuringLunch = lunchStart && lunchEnd &&
-                            (currentTime.isBetween(lunchStart, lunchEnd, null, '[)') || // Início do slot no almoço
-                             currentTime.clone().add(59, 'minutes').isBetween(lunchStart, lunchEnd, null, '(]')); // Fim do slot no almoço
-
-      if (isDuringWorkHours && !isDuringLunch && !bookedTimes.includes(slot)) {
+      // Adiciona o slot à lista de disponíveis apenas se não estiver na lista de agendados
+      if (!bookedTimes.includes(slot)) {
         availableSlots.push(slot);
       }
-      currentTime.add(1, 'hour'); // Próximo slot de 1 hora
+      
+      // Avança para o próximo slot de 1 hora
+      currentTime.add(1, 'hour');
     }
 
     return res.status(200).json(availableSlots);

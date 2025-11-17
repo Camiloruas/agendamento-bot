@@ -260,7 +260,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /agendamentos/available-slots`
+### `GET /agendamentos/available-slots` - Parei neste , fiz alterção para os dados persistirem , pois estva apagando toda vez que reiniciava
 
 **Descrição:** Recupera os horários de agendamento disponíveis para uma data específica.
 
