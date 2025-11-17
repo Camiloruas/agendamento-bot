@@ -8,7 +8,8 @@ import {
     updateAgendamento,
     getAvailableSlots, // Importe a nova função
     getAgendamentosByCliente, // Importe a nova função
-    hasActiveAgendamento // Importe a nova função
+    hasActiveAgendamento, // Importe a nova função
+    getAgendamentosByDate
 } from "../controllers/agendamentoController";
 
 const router = Router();
@@ -17,6 +18,7 @@ const router = Router();
 // URL final será: POST /api/agendamentos
 router.post("/", protect, createAgendamento);
 router.get("/", protect, getAllAgendamentos);
+router.get("/by-date", protect, getAgendamentosByDate);
 router.get("/:id", protect, getAgendamentoById);
 router.delete("/:id", protect, deleteAgendamento);
 router.put("/:id", protect, updateAgendamento);

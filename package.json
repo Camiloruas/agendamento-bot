@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "rm -rf node_modules/.cache && TS_NODE_PROJECT=backend/tsconfig.json tsx watch backend/src/server.ts",
+    "dev:bot": "TS_NODE_PROJECT=bot-service/tsconfig.json tsx watch bot-service/src/index.ts",
     "start": "node dist/server.js",
     "build": "tsc -p backend/tsconfig.json",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -22,14 +23,17 @@
   },
   "homepage": "https://github.com/Camiloruas/agendamento-bot#readme",
   "dependencies": {
+    "axios": "^1.7.2",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.15.3",
-    "sequelize": "^6.37.7"
+    "sequelize": "^6.37.7",
+    "whatsapp-web.js": "^1.24.1"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.0",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
@@ -39,4 +43,3 @@
     "typescript": "^5.9.3"
   }
 }
-

@@ -334,6 +334,49 @@ export const getAgendamentosByCliente = async (req: AuthRequest, res: Response):
   }
 };
 
+// NOVO: Função para obter agendamentos por data
+export const getAgendamentosByDate = async (req: AuthRequest, res: Response): Promise<Response> => {
+    const profissionalId = req.userId;
+    const { date } = req.query; // Data no formato YYYY-MM-DD
+
+    if (!profissionalId) {
+        return res.status(401).json({ message: "Profissional não autenticado." });
+    }
+
+    if (!date || typeof date !== 'string' || !moment(date, 'YYYY-MM-DD', true).isValid()) {
+        return res.status(400).json({ message: "A data é obrigatória e deve estar no formato YYYY-MM-DD." });
+    }
+
+    try {
+        const selectedDate = moment.utc(date as string);
+        const startOfDay = selectedDate.clone().startOf('day').toDate();
+        const endOfDay = selectedDate.clone().endOf('day').toDate();
+
+        const agendamentos = await Agendamento.findAll({
+            where: {
+                profissionalId: profissionalId,
+                dataHora: {
+                    [Op.between]: [startOfDay, endOfDay],
+                },
+            },
+            include: [
+                { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email"] },
+                { model: Cliente, as: 'cliente', attributes: ["id", "nome", "telefone"] }
+            ],
+            order: [["dataHora", "ASC"]],
+        });
+
+        if (agendamentos.length === 0) {
+            return res.status(404).json({ message: "Nenhum agendamento encontrado para esta data." });
+        }
+
+        return res.status(200).json(agendamentos);
+    } catch (error) {
+        console.error("Erro ao buscar agendamentos por data:", error);
+        return res.status(500).json({ message: "Erro interno ao buscar agendamentos por data." });
+    }
+};
+
 // NOVO: Função para verificar se um cliente possui agendamento ativo com um profissional
 export const hasActiveAgendamento = async (req: AuthRequest, res: Response): Promise<Response> => {
   const profissionalId = req.userId; // ID do profissional autenticado

@@ -260,7 +260,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /agendamentos/available-slots` - Parei neste , fiz alterção para os dados persistirem , pois estva apagando toda vez que reiniciava
+### `GET /agendamentos/available-slots` - Testado - OK
 
 **Descrição:** Recupera os horários de agendamento disponíveis para uma data específica.
 
@@ -268,9 +268,10 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 **Exemplo de URL:** `/agendamentos/available-slots?date=2025-11-12`
 
+
 ---
 
-### `GET /agendamentos/cliente/:clienteId`
+### `GET /agendamentos/cliente/:clienteId` - Testado - OK
 
 **Descrição:** Recupera todos os agendamentos para um cliente específico.
 
@@ -278,7 +279,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /agendamentos/has-active-appointment/:clienteId`
+### `GET /agendamentos/has-active-appointment/:clienteId` - Testado - OK
 
 **Descrição:** Verifica se um cliente específico tem um agendamento futuro ativo.
 
