@@ -167,9 +167,15 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
+### `POST /horarios`
+
+**Descrição:** Cria ou atualiza os horários de trabalho para o profissional autenticado.
+
+**Autenticação:** Requerida (Bearer Token)
+
 **Corpo da Requisição (JSON):**
 
-````json
+```json
 [
   {
     "diaDaSemana": 0,
@@ -188,8 +194,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
     "almocoFim": "13:00"
   }
 ]
-
----
+```
 
 ## 📅 Rotas de Agendamento (`/agendamentos`) - Testado - OK
 
@@ -200,6 +205,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "dataHora": "2025-12-25T10:00:00Z",
@@ -207,7 +213,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
   "servico": "Corte",
   "descricao": "Corte de cabelo com João"
 }
-````
+```
 
 ---
 
@@ -221,7 +227,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ### `GET /agendamentos/:id` - Testado - OK
 
-**Descrição:** Recupera um agendamento específico pelo seu ID. 
+**Descrição:** Recupera um agendamento específico pelo seu ID.
 
 **Autenticação:** Requerida (Bearer Token)
 
@@ -244,7 +250,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `DELETE /agendamentos/:id`
+### `DELETE /agendamentos/:id` - - Testado - OK - sÓ NÃO MOSTRA O FEEDBACK QUE O USUARIO FOI EXCLUIDO COM SUCESSO
 
 **Descrição:** Deleta um agendamento específico pelo seu ID.
 
