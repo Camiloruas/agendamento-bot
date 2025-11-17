@@ -2,10 +2,9 @@
 
 import { Sequelize } from "sequelize";
 import "dotenv/config";
+// REMOVIDO: Importações de modelos (Profissional, Agendamento, Cliente)
 
-// Mapeamento e parse das variáveis de ambiente com checagem de tipo
-// O 'as string' é um recurso do TypeScript chamado 'Type Assertion'.
-// Ele diz ao TS: "Confie em mim, esta variável EXISTE e é uma string."
+// Mapeamento e parse das variáveis de ambiente
 const dbName = process.env.DATABASE as string;
 const dbUser = process.env.DATABASE_USERNAME as string;
 const dbPassword = process.env.DATABASE_PASSWORD;
@@ -16,7 +15,7 @@ if (!dbName || !dbUser || !dbHost) {
   throw new Error("[DB ERROR] Variáveis de conexão essenciais não configuradas.");
 }
 
-// Instância do Sequelize
+// 1. Instância do Sequelize (PONTO DE CRIAÇÃO)
 const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
   host: dbHost,
   port: dbPort,
@@ -27,6 +26,8 @@ const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
     timestamps: true,
   },
 });
+
+// REMOVIDO: Associações (movidas para server.ts)
 
 // Tipagem: a função promete retornar um resultado vazio (void) de forma assíncrona.
 export async function testConnection(): Promise<void> {
@@ -39,4 +40,4 @@ export async function testConnection(): Promise<void> {
   }
 }
 
-export { sequelize };
+export default sequelize;

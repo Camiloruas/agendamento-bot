@@ -1,34 +1,69 @@
-// src/server.ts
-
-// Tipagem: Importamos Express, mas também os tipos específicos Express e Request/Response
 import * as dotenv from "dotenv";
+dotenv.config();
+
 import express, { Express, Request, Response } from "express";
+import profissionalRoutes from "./routes/profissionalRoutes";
+import agendamentoRoutes from "./routes/agendamentoRoutes";
+import clienteRoutes from "./routes/clienteRoutes";
+import horarioRoutes from "./routes/horarioRoutes"; // Importa as novas rotas
 
-// O '.js' é obrigatório no NodeNext/tsx, mesmo que o arquivo seja .ts
-import { sequelize, testConnection } from "./database/connection.js";
-import Profissional from "./models/Profissional.js";
+import sequelize, { testConnection } from "./database/connection";
 
-// Tipagem: A variável PORT deve ser um número (number)
+// CARREGAMENTO DAS CLASSES DOS MODELOS
+import Profissional from "./models/Profissional";
+import Agendamento from "./models/Agendamento";
+import Cliente from "./models/Cliente";
+import HorarioProfissional from "./models/HorarioProfissional"; // Importa o novo modelo
+
+// --- NOVO: INTERFACE PARA TIPAR OS MODELOS NO LOOP ---
+// Define a estrutura mínima que esperamos dos modelos para o loop de inicialização.
+interface ISequelizeModel {
+    // CORREÇÃO: Usamos 'any' para evitar o erro de referência circular de tipo (ts(2502)).
+    // O sequelize importado é do tipo correto, e a coerção 'as any' já protege a execução.
+    initialize: (sequelize: any) => void;
+    associate?: (models: any) => void; // Ajustado para aceitar modelos
+}
+// ----------------------------------------------------
+
 const PORT: number = parseInt(process.env.APP_PORT || "3001", 10);
-
-// Tipagem: A variável app é uma instância do Express (Express)
 const app: Express = express();
 
 // Middlewares
 app.use(express.json());
 
+// Rotas: Registra as rotas no Express com prefixos específicos
+app.use("/api/profissionais", profissionalRoutes);
+app.use("/api/agendamentos", agendamentoRoutes);
+app.use("/api/clientes", clienteRoutes);
+app.use("/api/horarios", horarioRoutes);
+
 // Rota de teste
-// Tipagem: Especificamos que o req é do tipo Request e o res é do tipo Response
 app.get("/", (req: Request, res: Response) => {
   res.send("API do Agendamento Bot rodando com TypeScript!");
 });
 
-// Função de Inicialização
+// Função de Inicialização do Servidor
 async function startServer() {
+  // 1. INICIALIZAÇÃO DOS MODELOS
+  const models = { Profissional, Cliente, Agendamento, HorarioProfissional };
+
+  for (const model of Object.values(models)) {
+    model.initialize(sequelize);
+  }
+
+  // 2. CRIAÇÃO DAS ASSOCIAÇÕES
+  for (const model of Object.values(models)) {
+    if (typeof model.associate === "function") {
+      model.associate(models); // Passa todos os modelos para o método associate
+    }
+  }
+
+  // 3. TESTE DE CONEXÃO E SINCRONIZAÇÃO
   await testConnection();
 
-  // NOVIDADE: Sincroniza todos os modelos (cria a tabela 'Profissionais' se não existir)
-  await sequelize.sync({ alter: true }); // 'alter: true' tenta fazer alterações não destrutivas
+  // Sincroniza os modelos (cria/altera tabelas conforme necessário)
+  // { alter: true } compara o estado atual do banco de dados e aplica as alterações necessárias.
+  await sequelize.sync({ alter: true }); // alter: true evita a perda de dados.
   console.log("[DB] Banco de dados sincronizado com sucesso!");
 
   app.listen(PORT, () => {
