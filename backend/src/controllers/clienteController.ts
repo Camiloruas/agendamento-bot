@@ -2,6 +2,7 @@
 
 import { Request, Response } from 'express';
 import Cliente from '../models/Cliente'; // Importa o novo modelo
+import Agendamento from '../models/Agendamento';
 
 // 1. Rota ÚTIL para o BOT: Buscar um cliente pelo telefone (número do WhatsApp)
 export const getClienteByTelefone = async (req: Request, res: Response): Promise<Response> => {
@@ -81,7 +82,12 @@ export const getClienteById = async (req: Request, res: Response): Promise<Respo
     const { id } = req.params;
 
     try {
-        const cliente = await Cliente.findByPk(id);
+        const cliente = await Cliente.findByPk(id, {
+            include: [{
+                model: Agendamento,
+                as: 'agendamentos'
+            }]
+        });
 
         if (!cliente) {
             return res.status(404).json({ message: "Cliente não encontrado." });
