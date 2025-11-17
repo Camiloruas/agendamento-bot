@@ -155,7 +155,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-## 🗓️ Rotas de Horários (`/horarios`)
+## 🗓️ Rotas de Horários (`/horarios`) - Testado - OK
 
 ### `GET /horarios`
 
@@ -168,7 +168,8 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 ---
 
 **Corpo da Requisição (JSON):**
-```json
+
+````json
 [
   {
     "diaDaSemana": 0,
@@ -190,7 +191,7 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-## 📅 Rotas de Agendamento (`/agendamentos`)
+## 📅 Rotas de Agendamento (`/agendamentos`) - Testado - OK
 
 ### `POST /agendamentos`
 
@@ -206,11 +207,11 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
   "servico": "Corte",
   "descricao": "Corte de cabelo com João"
 }
-```
+````
 
 ---
 
-### `GET /agendamentos`
+### `GET /agendamentos` - Testado - OK
 
 **Descrição:** Recupera todos os agendamentos para o profissional autenticado.
 
@@ -218,21 +219,22 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 
 ---
 
-### `GET /agendamentos/:id`
+### `GET /agendamentos/:id` - Testado - OK
 
-**Descrição:** Recupera um agendamento específico pelo seu ID.
+**Descrição:** Recupera um agendamento específico pelo seu ID. 
 
 **Autenticação:** Requerida (Bearer Token)
 
 ---
 
-### `PUT /agendamentos/:id`
+### `PUT /agendamentos/:id` - Testado - OK
 
 **Descrição:** Atualiza um agendamento existente.
 
 **Autenticação:** Requerida (Bearer Token)
 
 **Corpo da Requisição (JSON):**
+
 ```json
 {
   "dataHora": "2025-12-25T11:00:00Z",
@@ -275,4 +277,3 @@ Este arquivo documenta as rotas da API para o Bot de Agendamento. Os caminhos ab
 **Descrição:** Verifica se um cliente específico tem um agendamento futuro ativo.
 
 **Autenticação:** Requerida (Bearer Token)
-
