@@ -3,7 +3,7 @@
 import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
 import { handleIncomingMessage } from './botService'; // Importa a lógica principal do bot
-import { loginProfissional } from './api-client'; // Adicionar esta linha
+import { api } from './api-client'; // Importa o objeto api refatorado
 
 /**
  * Módulo de Inicialização e Integração com o WhatsApp (via whatsapp-web.js)
@@ -18,13 +18,6 @@ import { loginProfissional } from './api-client'; // Adicionar esta linha
 // Isso evita que você precise escanear o QR Code toda vez.
 const client = new Client({
     authStrategy: new LocalAuth({ clientId: 'agendamento_barber_bot' }),
-    // Nota: Em ambientes Ubuntu/Linux, certifique-se de que o Puppeteer
-    // (dependência do whatsapp-web.js) tenha as bibliotecas necessárias instaladas.
-    // Geralmente: sudo apt install -y chromium-browser
-    puppeteer: {
-        executablePath: '/usr/bin/chromium-browser',
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    },
 });
 
 console.log('[WHATSAPP] Inicializando cliente...');
@@ -51,7 +44,7 @@ client.on('ready', async () => { // Marcar como async
     console.log(`🤖 Bot associado ao número: ${client.info.wid.user}`);
 
     // **IMPORTANTE**: SUBSTITUA com as credenciais de um profissional VÁLIDO no seu BD
-    await loginProfissional('camilo@gmail.com', '123456');
+    await api.loginProfissional('camilo@gmail.com', '123456');
 });
 
 /**
