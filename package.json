@@ -29,16 +29,19 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.15.3",
+    "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.37.7",
-    "whatsapp-web.js": "^1.24.1"
+    "whatsapp-web.js": "^1.34.2"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.5",
     "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^24.10.0",
+    "@types/node": "^24.10.1",
+    "@types/qrcode-terminal": "^0.12.2",
     "@types/sequelize": "^4.28.20",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
