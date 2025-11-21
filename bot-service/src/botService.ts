@@ -139,7 +139,7 @@ async function handleRegistration(conv: Conversation, input: string): Promise<st
 
   // Após o cadastro, vai direto para o agendamento (opção 1 do menu)
   conv.state = BotState.AWAITING_SERVICE_SELECTION;
-  return `✅ Ótimo, ${conv.clienteNome}! Cliente cadastrado com sucesso. Agora, vamos agendar.
+  return `✅ Ótimo, ${conv.clienteNome}! Seu cadastrado foi realizado com sucesso. Agora, vamos agendar.
 
 Qual serviço deseja realizar? Digite o número:
 1) Corte
@@ -277,14 +277,18 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
 
   conv.selectedTime = conv.availableTimes[selection - 1];
 
-  const dataHoraFormatada = `${conv.selectedDate} às ${conv.selectedTime}`;
+  // Formata a data para o padrão brasileiro (DD/MM)
+  const dateObj = new Date(conv.selectedDate + "T00:00:00"); // Adiciona T00:00:00 para evitar problemas de timezone
+  const formattedDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+
+  const dataHoraFormatada = `${formattedDate} às ${conv.selectedTime}`;
 
   // --- Confirmação ---
   conv.state = BotState.CONFIRMATION;
   return `Confirmando:
 📅 ${dataHoraFormatada}
 💈 ${conv.selectedService}
-Está correto?
+Favor conferir a data, podemos Confirmar? 
 1) Sim
 2) Não (Voltar ao menu)`;
 }
