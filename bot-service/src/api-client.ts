@@ -59,13 +59,18 @@ export const api = {
   async getClienteByTelefone(telefone: string): Promise<any> {
     try {
       const response = await axios.get(`${API_BASE_URL}/clientes/telefone/${telefone}`);
+      console.log(`[API CLIENT] getClienteByTelefone - Resposta bem-sucedida para ${telefone}:`, response.data);
       return response.data;
     } catch (error: any) {
-      if (error.response && error.response.status === 404) {
-        return null; // Cliente não encontrado
+      if (axios.isAxiosError(error) && error.response) {
+        console.warn(`[API CLIENT] getClienteByTelefone - Erro de resposta da API para ${telefone}: Status ${error.response.status}, Data:`, error.response.data);
+        if (error.response.status === 404) {
+          return null; // Cliente não encontrado
+        }
+      } else {
+        console.error('[API CLIENT] getClienteByTelefone - Erro desconhecido ao buscar cliente:', error.message);
       }
-      console.error('[API] Erro ao buscar cliente:', error.message);
-      throw error;
+      throw error; // Re-lança outros erros
     }
   },
 
