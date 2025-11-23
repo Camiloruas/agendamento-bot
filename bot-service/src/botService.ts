@@ -207,7 +207,11 @@ async function handleExistingAppointmentMenu(conv: Conversation, input: string):
   } else if (selection === 3) {
     await api.cancelAgendamento(conv.activeAppointment.id);
     conv.activeAppointment = null;
-    return `✅ Agendamento cancelado com sucesso. ${await showMainMenu(conv)}`;
+    return `✅ Agendamento cancelado com sucesso. ${conv.clienteNome}, se quiser continuar com o atendimento, favor escolher opções abaixo: 
+1) Fazer um Novo Agendamento
+2) Ver Agendamentos Futuros (Consulta)
+0) Encerrar`;
+
   } else if (selection === 4) {
     conv.state = BotState.AWAITING_SERVICE_SELECTION;
     return `Certo, vamos para um novo agendamento.
@@ -413,6 +417,7 @@ export async function handleIncomingMessage(telefone: string, message: string): 
   try {
     let conv: Conversation;
     const input = message.trim();
+
     const normalizedInput = input.toLowerCase();
 
     if (!conversations.has(telefone)) {
