@@ -31,6 +31,7 @@ export interface Conversation {
   clienteId: number | null;
   clienteNome: string | null;
   telefone: string;
+  isExistingUser: boolean; // Adicionar esta linha
   selectedService: string | null;
   selectedDate: string | null;
   selectedTime: string | null;
@@ -58,20 +59,24 @@ export const SERVICES = [
  * Ponto de Início: Identifica se é cliente novo ou recorrente e direciona ao menu correto.
  */
 async function handleStart(conv: Conversation, input: string): Promise<string> {
-  // 1. Se cliente não está cadastrado -> Iniciar Cadastro
+  // Se cliente não está cadastrado -> Iniciar Cadastro
   if (!conv.clienteId) {
     conv.state = BotState.AWAITING_REGISTRATION_NAME;
     return "Olá! Bem-vindo ao nosso salão! Para fazermos o seu primeiro agendamento, preciso do seu nome completo:";
   }
 
-  // 2. Cliente já cadastrado: Verifica se já tem agendamento ativo
+  // Cliente já cadastrado:
+  // Cumprimenta o cliente pelo nome.
+  let greeting = `Olá, ${conv.clienteNome}! Bem-vindo(a) de volta 👋`;
+
+  // Verifica se já tem agendamento ativo
   conv.activeAppointment = await api.getActiveAppointment(conv.clienteId);
 
   if (conv.activeAppointment) {
     conv.state = BotState.EXISTING_APPOINTMENT_MENU;
     const dataHora = new Date(conv.activeAppointment.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' });
 
-    return `Olá, ${conv.clienteNome}! Você já tem um agendamento:
+    return `${greeting}\nVocê já tem um agendamento:
 📅 ${dataHora}
 💈 ${conv.activeAppointment.servico}
 Deseja:
@@ -80,7 +85,8 @@ Deseja:
 3) Cancelar
 4) Novo agendamento`;
   } else {
-    return await showMainMenu(conv);
+    // Se não tiver agendamento ativo, mostra o menu principal
+    return `${greeting}\n${await showMainMenu(conv)}`;
   }
 }
 
@@ -130,22 +136,53 @@ async function handleMainMenu(conv: Conversation, input: string): Promise<string
  */
 async function handleRegistration(conv: Conversation, input: string): Promise<string> {
   const nome = input.trim();
+
+  // If the user is already registered, redirect them to the main menu.
+  if (conv.isExistingUser) {
+    conv.state = BotState.MAIN_MENU;
+    return `Olá, ${conv.clienteNome}! Parece que você já está cadastrado. Como posso ajudar hoje? Digite o número da opção:
+1) Fazer um Novo Agendamento
+2) Ver Agendamentos Futuros (Consulta)
+0) Encerrar`;
+  }
+
   if (nome.length < 2) {
     return "Por favor, digite um nome válido para o cadastro.";
   }
 
-  const result = await api.createCliente(nome, conv.telefone);
-  conv.clienteId = result.cliente.id;
-  conv.clienteNome = result.cliente.nome;
+  try {
+    const result = await api.createCliente(nome, conv.telefone);
+    conv.clienteId = result.cliente.id;
+    conv.clienteNome = result.cliente.nome;
 
-  conv.state = BotState.AWAITING_SERVICE_SELECTION;
-  return `✅ Ótimo, ${conv.clienteNome}! Seu cadastrado foi realizado com sucesso. Agora, vamos agendar.
+    conv.state = BotState.AWAITING_SERVICE_SELECTION;
+    return `✅ Ótimo, ${conv.clienteNome}! Seu cadastrado foi realizado com sucesso. Agora, vamos agendar.
 
 Qual serviço deseja realizar? Digite o número:
 1) Corte
 2) Barba
 3) Corte + Barba
 0) Cancelar`;
+  } catch (error: any) {
+    console.error(`Erro ao criar cliente para ${conv.telefone}:`, error.response?.data || error.message);
+    // Assuming a 409 conflict for duplicate entry or similar.
+    // If the error message from the backend explicitly states "Cliente já existe", handle it.
+    if (error.response && error.response.status === 409 || (error.response?.data?.message && error.response.data.message.includes("já existe"))) {
+        conv.state = BotState.MAIN_MENU;
+        // Fetch client data again to ensure conv.clienteId and clienteNome are correctly populated if not already
+        const clienteData = await api.getClienteByTelefone(conv.telefone);
+        if (clienteData) {
+            conv.clienteId = clienteData.id;
+            conv.clienteNome = clienteData.nome;
+        }
+        return `Parece que você já está cadastrado, ${conv.clienteNome || 'caro cliente'}! Redirecionando para o menu principal. Como posso ajudar hoje? Digite o número da opção:
+1) Fazer um Novo Agendamento
+2) Ver Agendamentos Futuros (Consulta)
+0) Encerrar`;
+    }
+    conv.state = BotState.START;
+    return "Desculpe, houve um problema ao tentar realizar seu cadastro. Por favor, tente novamente mais tarde ou digite 'Olá' para recomeçar.";
+  }
 }
 
 /**
@@ -385,6 +422,7 @@ export async function handleIncomingMessage(telefone: string, message: string): 
         clienteId: clienteData?.id || null,
         clienteNome: clienteData?.nome || null,
         telefone: telefone,
+        isExistingUser: !!clienteData?.id, // Add this line
         selectedService: null,
         selectedDate: null,
         selectedTime: null,
