@@ -65,7 +65,7 @@ async function handleStart(conv: Conversation, input: string): Promise<string> {
   if (conv.activeAppointment) {
     // Se já tem agendamento ativo
     conv.state = BotState.EXISTING_APPOINTMENT_MENU;
-    const dataHora = new Date(conv.activeAppointment.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+    const dataHora = new Date(conv.activeAppointment.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' });
 
     return `Olá, ${conv.clienteNome}! Você já tem um agendamento:
 📅 ${dataHora}
@@ -112,7 +112,7 @@ async function handleMainMenu(conv: Conversation, input: string): Promise<string
 
     let msg = "Seus agendamentos futuros:\n";
     appointments.forEach((a: any, index: number) => {
-      const dataHora = new Date(a.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+      const dataHora = new Date(a.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' });
       msg += `${index + 1}. ${a.servico} em ${dataHora}\n`;
     });
     return `${msg}\n${await showMainMenu(conv)}`;
@@ -205,17 +205,19 @@ async function handleServiceSelection(conv: Conversation, input: string): Promis
 
   // --- Busca Dias Ativos ---
   const activeDates = await api.getAvailableDates();
-  conv.availableDates = activeDates.map((date: string) => date.split("T")[0]);
+  
+  // Limita a lista de datas para os próximos 8 dias disponíveis
+  conv.availableDates = activeDates.map((date: string) => date.split("T")[0]).slice(0, 8);
 
   if (conv.availableDates.length === 0) {
     return `Desculpe, não temos dias disponíveis no momento. ${await showMainMenu(conv)}`;
   }
 
-  let datesMessage = "Escolha o dia:\n";
+  let datesMessage = "Escolha o dia (temos estes próximos 8 dias disponíveis):\n";
   conv.availableDates.forEach((dateStr, index) => {
     const dateObj = new Date(dateStr + "T00:00:00Z");
     const dayOfWeek = DIAS_SEMANA[dateObj.getUTCDay()];
-    const formattedDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    const formattedDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: 'UTC' });
     datesMessage += `${index + 1}) ${dayOfWeek} (${formattedDate})\n`;
   });
   datesMessage += "0) Voltar ao Menu Principal";
@@ -278,8 +280,8 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
   conv.selectedTime = conv.availableTimes[selection - 1];
 
   // Formata a data para o padrão brasileiro (DD/MM)
-  const dateObj = new Date(conv.selectedDate + "T00:00:00"); // Adiciona T00:00:00 para evitar problemas de timezone
-  const formattedDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+  const dateObj = new Date(conv.selectedDate + "T00:00:00Z"); // Use Z for UTC consistency
+  const formattedDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: 'UTC' });
 
   const dataHoraFormatada = `${formattedDate} às ${conv.selectedTime}`;
 
@@ -306,11 +308,12 @@ async function handleConfirmation(conv: Conversation, input: string): Promise<st
       return "Erro interno: Dados incompletos para o agendamento. Digite 'Olá' para recomeçar.";
     }
 
-    const fullDateTime = `${conv.selectedDate} ${conv.selectedTime}:00`;
+    const fullDateTime = `${conv.selectedDate}T${conv.selectedTime}:00`; // String de hora local, ex: "2025-11-25T09:00:00"
 
     const newAppointmentData = {
       profissionalId: api.getProfissionalId(),
       clienteId: conv.clienteId,
+      // Analisa a string de hora local (assumindo que o servidor está no fuso horário correto) e converte para string ISO 8601 UTC
       dataHora: new Date(fullDateTime).toISOString(),
       servico: conv.selectedService,
     };
@@ -325,7 +328,7 @@ async function handleConfirmation(conv: Conversation, input: string): Promise<st
 
     return `✅ Agendamento realizado com sucesso!
 Detalhes:
-📅 ${new Date(result.agendamento.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}
+📅 ${new Date(result.agendamento.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' })}
 💈 ${result.agendamento.servico}
 Aguardamos você, ${conv.clienteNome}! 😊`;
   } else if (selection === 2) {
