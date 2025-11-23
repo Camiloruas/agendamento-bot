@@ -66,9 +66,6 @@ async function handleStart(conv: Conversation, input: string): Promise<string> {
   }
 
   // Cliente já cadastrado:
-  // Cumprimenta o cliente pelo nome.
-  let greeting = `Olá, ${conv.clienteNome}! Bem-vindo(a) de volta 👋`;
-
   // Verifica se já tem agendamento ativo
   conv.activeAppointment = await api.getActiveAppointment(conv.clienteId);
 
@@ -76,7 +73,7 @@ async function handleStart(conv: Conversation, input: string): Promise<string> {
     conv.state = BotState.EXISTING_APPOINTMENT_MENU;
     const dataHora = new Date(conv.activeAppointment.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' });
 
-    return `${greeting}\nVocê já tem um agendamento:
+    return `Olá, ${conv.clienteNome}! Você já tem um agendamento:
 📅 ${dataHora}
 💈 ${conv.activeAppointment.servico}
 Deseja:
@@ -86,7 +83,11 @@ Deseja:
 4) Novo agendamento`;
   } else {
     // Se não tiver agendamento ativo, mostra o menu principal
-    return `${greeting}\n${await showMainMenu(conv)}`;
+    conv.state = BotState.MAIN_MENU;
+    return `Olá, ${conv.clienteNome}! Qual serviço deseja realizar hoje?
+1) Fazer um Novo Agendamento
+2) Ver Agendamentos Futuros (Consulta)
+0) Encerrar`;
   }
 }
 
@@ -315,7 +316,7 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
     conv.availableTimes.forEach((slot, index) => {
       const statusEmoji = slot.status === 'disponivel' ? '✅' : '❌';
       const statusText = slot.status === 'disponivel' ? 'Disponível' : 'Ocupado';
-      timesMessage += `${index + 1}) ${slot.time} (${statusText}) ${statusEmoji}\n`;
+    timesMessage += `${index + 1}) ${slot.time} (${statusText}) ${statusEmoji}\n`;
     });
     timesMessage += "0) Voltar ao Menu Principal";
     return timesMessage; // Permanece no mesmo estado e pede para escolher novamente
@@ -465,3 +466,4 @@ export async function handleIncomingMessage(telefone: string, message: string): 
     return "Desculpe, houve um erro técnico. Tente novamente mais tarde.";
   }
 }
+
