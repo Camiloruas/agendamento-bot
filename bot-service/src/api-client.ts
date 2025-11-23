@@ -58,7 +58,7 @@ export const api = {
    */
   async getClienteByTelefone(telefone: string): Promise<any> {
     try {
-      const response = await axios.get(`${API_BASE_URL}/clientes/telefone/${telefone}`);
+      const response = await axios.get(`${API_BASE_URL}/clientes/by-phone?telefone=${telefone}`);
       console.log(`[API CLIENT] getClienteByTelefone - Resposta bem-sucedida para ${telefone}:`, response.data);
       return response.data;
     } catch (error: any) {
