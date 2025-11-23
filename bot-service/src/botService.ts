@@ -416,7 +416,9 @@ export async function handleIncomingMessage(telefone: string, message: string): 
     const normalizedInput = input.toLowerCase();
 
     if (!conversations.has(telefone)) {
+      console.log(`[handleIncomingMessage] Iniciando nova conversa para telefone: ${telefone}`);
       const clienteData = await api.getClienteByTelefone(telefone);
+      console.log(`[handleIncomingMessage] Resultado de getClienteByTelefone para ${telefone}:`, clienteData);
 
       conv = {
         state: BotState.START,
@@ -434,6 +436,7 @@ export async function handleIncomingMessage(telefone: string, message: string): 
       conversations.set(telefone, conv);
     } else {
       conv = conversations.get(telefone)!;
+      console.log(`[handleIncomingMessage] Conversa existente encontrada para telefone: ${telefone}, estado: ${conv.state}`);
     }
 
     if (normalizedInput === "olá" || normalizedInput === "menu" || (normalizedInput === "0" && conv.state !== BotState.MAIN_MENU && conv.state !== BotState.AWAITING_SERVICE_SELECTION)) {
