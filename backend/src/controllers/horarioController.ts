@@ -6,6 +6,7 @@ import { AuthRequest } from '../middlewares/authMiddleware';
 import HorarioProfissional from '../models/HorarioProfissional';
 import Agendamento from '../models/Agendamento';
 import { HorarioProfissionalAttributes } from '../models/HorarioProfissional';
+import moment from 'moment-timezone'; // Importação explícita de moment-timezone
 
 // Função para o profissional obter sua própria configuração de horários
 export const getHorarios = async (req: AuthRequest, res: Response): Promise<Response> => {
@@ -108,58 +109,85 @@ export const getDiasDisponiveis = async (req: Request, res: Response): Promise<R
 };
 
 /**
- * Retorna os horários disponíveis para um profissional em uma data específica.
+ * Retorna todos os horários de um profissional para uma data específica com seus respectivos status (Disponível/Ocupado).
  */
 export const getHorariosDisponiveis = async (req: Request, res: Response): Promise<Response> => {
     const { profissionalId, date } = req.params;
-    const diaDaSemana = new Date(date).getUTCDay();
+
+    // A validação de data já foi feita em api-client.ts antes de chamar esta rota.
+    // Garante que o profissionalId é UUID
+    if (!profissionalId || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(profissionalId)) {
+        return res.status(400).json({ message: "ID do profissional inválido." });
+    }
+
+    const TIMEZONE = 'America/Sao_Paulo'; // Fuso horário a ser usado para o profissional
 
     try {
-        const configHorario = await HorarioProfissional.findOne({
-            where: { profissionalId, diaDaSemana, ativo: true },
+        const selectedDate = moment.utc(date as string); // Continua sendo UTC para o dia (YYYY-MM-DD)
+        const dayOfWeek = selectedDate.day(); // 0 (Domingo) a 6 (Sábado)
+
+        // 1. Buscar a configuração de horário do profissional para o dia da semana
+        const horarioConfig = await HorarioProfissional.findOne({
+            where: { profissionalId, diaDaSemana: dayOfWeek, ativo: true },
         });
 
-        if (!configHorario) {
+        // Se não houver configuração de horário, retorna uma lista vazia.
+        if (!horarioConfig) {
             return res.status(200).json([]); // Não trabalha neste dia
         }
 
-        // 1. Gerar todos os slots do dia
-        const slots = [];
-        const [startHour] = configHorario.horarioInicio.split(':').map(Number);
-        const [endHour] = configHorario.horarioFim.split(':').map(Number);
-        // Assumindo duração de 1 hora por slot
-        for (let hour = startHour; hour < endHour; hour++) {
-            slots.push(`${String(hour).padStart(2, '0')}:00`);
-        }
+        // 2. Buscar agendamentos existentes para o profissional na data selecionada (em UTC)
+        // Precisamos dos agendamentos no fuso horário do profissional para comparar corretamente
+        const startOfDayInTimezone = moment.tz(date as string, TIMEZONE).startOf('day');
+        const endOfDayInTimezone = moment.tz(date as string, TIMEZONE).endOf('day');
 
-        // 2. Buscar agendamentos existentes para o dia
-        const inicioDoDia = new Date(`${date}T00:00:00.000Z`);
-        const fimDoDia = new Date(`${date}T23:59:59.999Z`);
-
-        const agendamentos = await Agendamento.findAll({
+        const existingAppointments = await Agendamento.findAll({
             where: {
-                profissionalId,
+                profissionalId: profissionalId,
                 dataHora: {
-                    [Op.between]: [inicioDoDia, fimDoDia],
+                    [Op.between]: [startOfDayInTimezone.clone().utc().toDate(), endOfDayInTimezone.clone().utc().toDate()],
+                },
+                status: {
+                    [Op.ne]: 'Cancelado', // Não considerar agendamentos cancelados
                 },
             },
             attributes: ['dataHora'],
         });
 
-        const horariosOcupados = new Set(
-            agendamentos.map(a => new Date(a.dataHora).getUTCHours())
-        );
+        // Formata os horários agendados para 'HH:mm' NO FUSO HORÁRIO DO PROFISSIONAL e usa um Set para busca eficiente
+        const bookedTimes = new Set(existingAppointments.map(app => moment.tz(app.dataHora, TIMEZONE).format('HH:mm')));
 
-        // 3. Filtrar slots disponíveis
-        const horariosDisponiveis = slots.filter(slot => {
-            const hour = Number(slot.split(':')[0]);
-            return !horariosOcupados.has(hour);
-        });
+        // 3. Gerar todos os slots do dia com seus status
+        const allSlots: { time: string, status: 'disponivel' | 'ocupado' }[] = [];
+        
+        // Combina a data selecionada com a hora inicial e final, tratando como o fuso horário do profissional
+        const currentTime = moment.tz(`${date} ${horarioConfig.horarioInicio}`, 'YYYY-MM-DD HH:mm', TIMEZONE);
+        const endTime = moment.tz(`${date} ${horarioConfig.horarioFim}`, 'YYYY-MM-DD HH:mm', TIMEZONE);
+        const lunchStart = horarioConfig.almocoInicio ? moment.tz(`${date} ${horarioConfig.almocoInicio}`, 'YYYY-MM-DD HH:mm', TIMEZONE) : null;
+        const lunchEnd = horarioConfig.almocoFim ? moment.tz(`${date} ${horarioConfig.almocoFim}`, 'YYYY-MM-DD HH:mm', TIMEZONE) : null;
 
-        return res.status(200).json(horariosDisponiveis);
+        // Itera sobre os horários do dia, de hora em hora (ou conforme a duração do slot)
+        while (currentTime.isBefore(endTime)) {
+            // Se o horário atual cair dentro da janela de almoço, avança o tempo para o fim do almoço
+            // currentTime e lunchStart/End já estão no fuso horário correto
+            if (lunchStart && lunchEnd && currentTime.isBetween(lunchStart, lunchEnd, null, '[)')) {
+                currentTime.add(1, 'hour'); // Pula o almoço
+                continue; 
+            }
+
+            const slotTime = currentTime.format('HH:mm'); // Formata a hora no fuso horário do profissional
+            const status = bookedTimes.has(slotTime) ? 'ocupado' : 'disponivel';
+            
+            allSlots.push({ time: slotTime, status: status });
+            
+            // Avança para o próximo slot (assumindo slots de 1 hora)
+            currentTime.add(1, 'hour');
+        }
+
+        return res.status(200).json(allSlots);
 
     } catch (error) {
         console.error("Erro ao buscar horários disponíveis:", error);
-        return res.status(500).json({ message: "Erro interno ao buscar horários." });
+        return res.status(500).json({ message: "Erro interno ao buscar horários disponíveis.", details: (error as Error).message });
     }
 };
