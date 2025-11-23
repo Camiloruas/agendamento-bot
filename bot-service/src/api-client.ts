@@ -5,7 +5,15 @@ import axios from 'axios';
 // URL base da sua API de backend
 const API_BASE_URL = process.env.BACKEND_API_URL || 'http://localhost:3001/api';
 
-let profissionalId: number | null = null; 
+let profissionalId: number | null = null;
+
+// Erro customizado para conflitos de agendamento
+export class AppointmentConflictError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AppointmentConflictError';
+  }
+}
 
 export const api = {
   /**
@@ -16,11 +24,11 @@ export const api = {
     try {
       const response = await axios.post(`${API_BASE_URL}/profissionais/login`, {
         email: email,
-        senha: password, 
+        senha: password,
       });
 
       const { token, profissional } = response.data;
-      
+
       if (!token) {
         throw new Error("Token não recebido da API de login.");
       }
@@ -77,7 +85,7 @@ export const api = {
     const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}?status=ativo`);
     return response.data[0] || null;
   },
-  
+
   /**
    * Busca agendamentos futuros de um cliente.
    */
@@ -114,12 +122,21 @@ export const api = {
     const response = await axios.get(`${API_BASE_URL}/horarios/horarios-disponiveis/${this.getProfissionalId()}/${date}`);
     return response.data;
   },
-  
+
   /**
    * Cria um novo agendamento.
    */
   async createAgendamento(data: any): Promise<any> {
-    const response = await axios.post(`${API_BASE_URL}/agendamentos`, data);
-    return response.data;
+    try {
+      const response = await axios.post(`${API_BASE_URL}/agendamentos`, data);
+      return response.data;
+    } catch (error: any) {
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        // Lança um erro específico para conflito de agendamento
+        throw new AppointmentConflictError(error.response.data.message || 'Este horário já foi agendado.');
+      }
+      // Para outros erros, relança o erro original
+      throw error;
+    }
   }
 };

@@ -1,6 +1,6 @@
 // bot-service/src/botService.ts
 
-import { api } from "./api-client"; // Importa apenas o objeto da API
+import { api, AppointmentConflictError } from "./api-client"; // Importa o erro customizado
 
 // --- DEFINIÇÕES DE ESTADO E CONSTANTES ---
 
@@ -19,6 +19,12 @@ export enum BotState {
   CONFIRMATION,
 }
 
+// Nova interface para os slots de horário
+interface TimeSlot {
+  time: string;
+  status: 'disponivel' | 'ocupado';
+}
+
 // Interface para o objeto de conversa
 export interface Conversation {
   state: BotState;
@@ -30,7 +36,7 @@ export interface Conversation {
   selectedTime: string | null;
   activeAppointment: any | null; // Considere tipar melhor (Agendamento)
   availableDates: string[];
-  availableTimes: string[];
+  availableTimes: TimeSlot[]; // Modificado para usar a nova interface
 }
 
 // Constantes
@@ -50,7 +56,6 @@ export const SERVICES = [
 
 /**
  * Ponto de Início: Identifica se é cliente novo ou recorrente e direciona ao menu correto.
- * Esta função é chamada apenas para a primeira mensagem de uma nova sessão ou após a finalização.
  */
 async function handleStart(conv: Conversation, input: string): Promise<string> {
   // 1. Se cliente não está cadastrado -> Iniciar Cadastro
@@ -63,7 +68,6 @@ async function handleStart(conv: Conversation, input: string): Promise<string> {
   conv.activeAppointment = await api.getActiveAppointment(conv.clienteId);
 
   if (conv.activeAppointment) {
-    // Se já tem agendamento ativo
     conv.state = BotState.EXISTING_APPOINTMENT_MENU;
     const dataHora = new Date(conv.activeAppointment.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' });
 
@@ -76,13 +80,12 @@ Deseja:
 3) Cancelar
 4) Novo agendamento`;
   } else {
-    // Não tem agendamento ativo -> Menu Principal
     return await showMainMenu(conv);
   }
 }
 
 /**
- * Exibe e processa o Menu Principal (novo agendamento ou consulta).
+ * Exibe e processa o Menu Principal.
  */
 async function showMainMenu(conv: Conversation): Promise<string> {
   conv.state = BotState.MAIN_MENU;
@@ -104,8 +107,7 @@ async function handleMainMenu(conv: Conversation, input: string): Promise<string
 3) Corte + Barba
 0) Cancelar`;
   } else if (selection === 2) {
-    // Opção 2: Consultar agendamentos futuros
-    const appointments = await api.getFutureAppointments(conv.clienteId!); // Assumimos que a rota existe
+    const appointments = await api.getFutureAppointments(conv.clienteId!);
     if (appointments.length === 0) {
       return `Você não possui agendamentos futuros. ${await showMainMenu(conv)}`;
     }
@@ -124,7 +126,7 @@ async function handleMainMenu(conv: Conversation, input: string): Promise<string
 }
 
 /**
- * Cadastro: Salva o nome e avança para o menu principal/serviço.
+ * Cadastro: Salva o nome e avança para o agendamento.
  */
 async function handleRegistration(conv: Conversation, input: string): Promise<string> {
   const nome = input.trim();
@@ -133,11 +135,9 @@ async function handleRegistration(conv: Conversation, input: string): Promise<st
   }
 
   const result = await api.createCliente(nome, conv.telefone);
-
   conv.clienteId = result.cliente.id;
   conv.clienteNome = result.cliente.nome;
 
-  // Após o cadastro, vai direto para o agendamento (opção 1 do menu)
   conv.state = BotState.AWAITING_SERVICE_SELECTION;
   return `✅ Ótimo, ${conv.clienteNome}! Seu cadastrado foi realizado com sucesso. Agora, vamos agendar.
 
@@ -155,10 +155,9 @@ async function handleExistingAppointmentMenu(conv: Conversation, input: string):
   const selection = parseInt(input);
 
   if (selection === 1) {
-    conv.state = BotState.START; // Reseta, mas mantém o agendamento
+    conv.state = BotState.START;
     return `Seu agendamento foi mantido. Até breve!`;
   } else if (selection === 2) {
-    // Remarcar: Cancelamos o antigo e começamos um novo fluxo de agendamento
     await api.cancelAgendamento(conv.activeAppointment.id);
     conv.activeAppointment = null;
     conv.state = BotState.AWAITING_SERVICE_SELECTION;
@@ -168,12 +167,10 @@ async function handleExistingAppointmentMenu(conv: Conversation, input: string):
 3) Corte + Barba
 0) Cancelar`;
   } else if (selection === 3) {
-    // Cancelar
     await api.cancelAgendamento(conv.activeAppointment.id);
     conv.activeAppointment = null;
     return `✅ Agendamento cancelado com sucesso. ${await showMainMenu(conv)}`;
   } else if (selection === 4) {
-    // Novo Agendamento (4)
     conv.state = BotState.AWAITING_SERVICE_SELECTION;
     return `Certo, vamos para um novo agendamento.
 Qual serviço deseja realizar? Digite o número:
@@ -203,10 +200,7 @@ async function handleServiceSelection(conv: Conversation, input: string): Promis
 
   conv.selectedService = selectedService.servico_tag;
 
-  // --- Busca Dias Ativos ---
   const activeDates = await api.getAvailableDates();
-  
-  // Limita a lista de datas para os próximos 8 dias disponíveis
   conv.availableDates = activeDates.map((date: string) => date.split("T")[0]).slice(0, 8);
 
   if (conv.availableDates.length === 0) {
@@ -227,7 +221,7 @@ async function handleServiceSelection(conv: Conversation, input: string): Promis
 }
 
 /**
- * Seleção de Dia: Define o dia e busca os horários disponíveis na API.
+ * Seleção de Dia: Busca e exibe os horários com status (Disponível/Ocupado).
  */
 async function handleDaySelection(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
@@ -243,19 +237,18 @@ async function handleDaySelection(conv: Conversation, input: string): Promise<st
   const selectedDate = conv.availableDates[selection - 1];
   conv.selectedDate = selectedDate;
 
-  // CHAMA A ROTA DA API: getAvailableSlots
   const slots = await api.getAvailableSlots(selectedDate);
   conv.availableTimes = slots;
 
   if (slots.length === 0) {
-    // Se a API não retornar horários (dia de folga, ou tudo ocupado)
-    return `❌ Não há horários disponíveis para o dia ${selectedDate}. Por favor, tente outro dia.`;
+    return `❌ Não há horários de trabalho configurados para o dia ${new Date(selectedDate + "T00:00:00Z").toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}. Por favor, tente outro dia.`;
   }
 
-  // Monta a mensagem de horários
-  let timesMessage = "Horários disponíveis:\n";
-  slots.forEach((timeStr, index) => {
-    timesMessage += `${index + 1}) ${timeStr}\n`;
+  let timesMessage = "Escolha um horário abaixo:\n";
+  slots.forEach((slot, index) => {
+    const statusEmoji = slot.status === 'disponivel' ? '✅' : '❌';
+    const statusText = slot.status === 'disponivel' ? 'Disponível' : 'Ocupado';
+    timesMessage += `${index + 1}) ${slot.time} (${statusText}) ${statusEmoji}\n`;
   });
   timesMessage += "0) Voltar ao Menu Principal";
 
@@ -264,7 +257,7 @@ async function handleDaySelection(conv: Conversation, input: string): Promise<st
 }
 
 /**
- * Seleção de Horário: Define a hora e avança para a confirmação.
+ * Seleção de Horário: Valida a escolha e avança para a confirmação.
  */
 async function handleTimeSelection(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
@@ -277,15 +270,26 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
     return `Horário inválido. Por favor, escolha um número de 1 a ${conv.availableTimes.length}.`;
   }
 
-  conv.selectedTime = conv.availableTimes[selection - 1];
+  const selectedSlot = conv.availableTimes[selection - 1];
 
-  // Formata a data para o padrão brasileiro (DD/MM)
-  const dateObj = new Date(conv.selectedDate + "T00:00:00Z"); // Use Z for UTC consistency
+  // Validação do status do slot escolhido
+  if (selectedSlot.status === 'ocupado') {
+    let timesMessage = `❌ O horário ${selectedSlot.time} está ocupado. Por favor, escolha outro horário da lista abaixo:\n`;
+    conv.availableTimes.forEach((slot, index) => {
+      const statusEmoji = slot.status === 'disponivel' ? '✅' : '❌';
+      const statusText = slot.status === 'disponivel' ? 'Disponível' : 'Ocupado';
+      timesMessage += `${index + 1}) ${slot.time} (${statusText}) ${statusEmoji}\n`;
+    });
+    timesMessage += "0) Voltar ao Menu Principal";
+    return timesMessage; // Permanece no mesmo estado e pede para escolher novamente
+  }
+
+  conv.selectedTime = selectedSlot.time;
+
+  const dateObj = new Date(conv.selectedDate + "T00:00:00Z");
   const formattedDate = dateObj.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", timeZone: 'UTC' });
-
   const dataHoraFormatada = `${formattedDate} às ${conv.selectedTime}`;
 
-  // --- Confirmação ---
   conv.state = BotState.CONFIRMATION;
   return `Confirmando:
 📅 ${dataHoraFormatada}
@@ -296,31 +300,35 @@ Favor conferir a data, podemos Confirmar?
 }
 
 /**
- * Confirmação: Salva o agendamento no banco.
+ * Confirmação: Salva o agendamento e trata conflitos.
  */
 async function handleConfirmation(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
 
-  if (selection === 1) {
-    // CHAMA A ROTA DA API: createAgendamento
-    if (!conv.clienteId || !conv.selectedDate || !conv.selectedTime || !conv.selectedService) {
-      conv.state = BotState.START;
-      return "Erro interno: Dados incompletos para o agendamento. Digite 'Olá' para recomeçar.";
-    }
+  if (selection === 2) { // Não
+    return await showMainMenu(conv);
+  }
 
-    const fullDateTime = `${conv.selectedDate}T${conv.selectedTime}:00`; // String de hora local, ex: "2025-11-25T09:00:00"
+  if (selection !== 1) { // Opção inválida
+    return "Opção inválida. Digite 1 para confirmar ou 2 para voltar ao Menu Principal.";
+  }
 
-    const newAppointmentData = {
-      profissionalId: api.getProfissionalId(),
-      clienteId: conv.clienteId,
-      // Analisa a string de hora local (assumindo que o servidor está no fuso horário correto) e converte para string ISO 8601 UTC
-      dataHora: new Date(fullDateTime).toISOString(),
-      servico: conv.selectedService,
-    };
+  if (!conv.clienteId || !conv.selectedDate || !conv.selectedTime || !conv.selectedService) {
+    conv.state = BotState.START;
+    return "Erro interno: Dados incompletos para o agendamento. Digite 'Olá' para recomeçar.";
+  }
 
+  const fullDateTime = `${conv.selectedDate}T${conv.selectedTime}:00`;
+  const newAppointmentData = {
+    profissionalId: api.getProfissionalId(),
+    clienteId: conv.clienteId,
+    dataHora: new Date(fullDateTime).toISOString(),
+    servico: conv.selectedService,
+  };
+
+  try {
     const result = await api.createAgendamento(newAppointmentData);
 
-    // Limpa o estado da conversa e finaliza
     conv.state = BotState.START;
     conv.selectedDate = null;
     conv.selectedTime = null;
@@ -331,11 +339,33 @@ Detalhes:
 📅 ${new Date(result.agendamento.dataHora).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: 'America/Sao_Paulo' })}
 💈 ${result.agendamento.servico}
 Aguardamos você, ${conv.clienteNome}! 😊`;
-  } else if (selection === 2) {
-    return await showMainMenu(conv);
-  }
 
-  return "Opção inválida. Digite 1 para confirmar ou 2 para voltar ao Menu Principal.";
+  } catch (error) {
+    if (error instanceof AppointmentConflictError) {
+      const freshSlots = await api.getAvailableSlots(conv.selectedDate);
+      conv.availableTimes = freshSlots;
+
+      const availableCount = freshSlots.filter(s => s.status === 'disponivel').length;
+
+      if (availableCount === 0) {
+        conv.state = BotState.AWAITING_DAY_SELECTION;
+        return `❌ Ops! Parece que outra pessoa agendou neste mesmo horário. E não há mais horários para este dia. Por favor, escolha outro dia.`;
+      }
+
+      let timesMessage = `❌ Ops! Parece que outra pessoa agendou neste mesmo horário. Mas ainda temos estes horários disponíveis para o dia ${new Date(conv.selectedDate + "T00:00:00Z").toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}:\n`;
+      freshSlots.forEach((slot, index) => {
+        const statusEmoji = slot.status === 'disponivel' ? '✅' : '❌';
+        const statusText = slot.status === 'disponivel' ? 'Disponível' : 'Ocupado';
+        timesMessage += `${index + 1}) ${slot.time} (${statusText}) ${statusEmoji}\n`;
+      });
+      timesMessage += "0) Voltar ao Menu Principal";
+
+      conv.state = BotState.AWAITING_TIME_SELECTION;
+      return timesMessage;
+    }
+
+    throw error;
+  }
 }
 
 /**
@@ -347,7 +377,6 @@ export async function handleIncomingMessage(telefone: string, message: string): 
     const input = message.trim();
     const normalizedInput = input.toLowerCase();
 
-    // 1. Inicializa ou recupera o estado da conversa
     if (!conversations.has(telefone)) {
       const clienteData = await api.getClienteByTelefone(telefone);
 
@@ -368,37 +397,27 @@ export async function handleIncomingMessage(telefone: string, message: string): 
       conv = conversations.get(telefone)!;
     }
 
-    // Se o cliente digitar 'olá' ou 'menu' em qualquer momento, volta ao START
     if (normalizedInput === "olá" || normalizedInput === "menu" || (normalizedInput === "0" && conv.state !== BotState.MAIN_MENU && conv.state !== BotState.AWAITING_SERVICE_SELECTION)) {
       conv.state = BotState.START;
     }
 
-    // --- Lógica do Estado da Conversa ---
     switch (conv.state) {
       case BotState.START:
-        return await handleStart(conv, input); // Chama handleStart para identificar o cliente e direcionar
-
+        return await handleStart(conv, input);
       case BotState.AWAITING_REGISTRATION_NAME:
         return await handleRegistration(conv, input);
-
       case BotState.MAIN_MENU:
         return await handleMainMenu(conv, input);
-
       case BotState.EXISTING_APPOINTMENT_MENU:
         return await handleExistingAppointmentMenu(conv, input);
-
       case BotState.AWAITING_SERVICE_SELECTION:
         return await handleServiceSelection(conv, input);
-
       case BotState.AWAITING_DAY_SELECTION:
         return await handleDaySelection(conv, input);
-
       case BotState.AWAITING_TIME_SELECTION:
         return await handleTimeSelection(conv, input);
-
       case BotState.CONFIRMATION:
         return await handleConfirmation(conv, input);
-
       default:
         conv.state = BotState.START;
         return "Desculpe, não entendi. Por favor, digite 'Olá' para começar a usar o menu.";
