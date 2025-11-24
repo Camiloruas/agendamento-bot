@@ -86,9 +86,22 @@ export const api = {
    * Busca o agendamento ativo de um cliente.
    */
   async getActiveAppointment(clienteId: number): Promise<any> {
-    // Esta é uma lógica de exemplo, a API pode não ter uma rota "active"
-    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}?status=ativo`);
-    return response.data[0] || null;
+    try {
+        const response = await axios.get(`${API_BASE_URL}/agendamentos/has-active-appointment/${clienteId}`);
+        // Assuming the backend returns the active appointment object if found, or null/empty object if not.
+        // The hasActiveAgendamento controller might return a boolean, or the active appointment directly.
+        // Let's assume it returns the appointment object if active, otherwise null.
+        return response.data || null;
+    } catch (error: any) {
+        if (axios.isAxiosError(error) && error.response) {
+            // If the API returns 404 meaning no active appointment, we treat it as null.
+            if (error.response.status === 404) {
+                return null;
+            }
+        }
+        // For any other error, re-throw it.
+        throw error;
+    }
   },
 
   /**
