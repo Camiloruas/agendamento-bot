@@ -1,6 +1,7 @@
 // bot-service/src/api-client.ts
 
 import axios from 'axios';
+import moment from 'moment'; // Import moment for date comparison
 
 // URL base da sua API de backend
 const API_BASE_URL = process.env.BACKEND_API_URL || 'http://localhost:3001/api';
@@ -87,20 +88,26 @@ export const api = {
    */
   async getActiveAppointment(clienteId: number): Promise<any> {
     try {
-        const response = await axios.get(`${API_BASE_URL}/agendamentos/has-active-appointment/${clienteId}`);
-        // Assuming the backend returns the active appointment object if found, or null/empty object if not.
-        // The hasActiveAgendamento controller might return a boolean, or the active appointment directly.
-        // Let's assume it returns the appointment object if active, otherwise null.
-        return response.data || null;
+        const futureAppointments = await api.getFutureAppointments(clienteId);
+        console.log(`[API CLIENT] getActiveAppointment - Future appointments para cliente ${clienteId}:`, futureAppointments);
+        const now = moment();
+
+        // Filter for the first active appointment (Pendente or Confirmado) that is in the future
+        const activeAppointment = futureAppointments.find(app =>
+            ['Pendente', 'Confirmado'].includes(app.status) && moment(app.dataHora).isSameOrAfter(now)
+        );
+        console.log(`[API CLIENT] getActiveAppointment - Active appointment found:`, activeAppointment);
+        return activeAppointment || null;
     } catch (error: any) {
-        if (axios.isAxiosError(error) && error.response) {
-            // If the API returns 404 meaning no active appointment, we treat it as null.
-            if (error.response.status === 404) {
-                return null;
-            }
+        // If getFutureAppointments throws an error (e.g., 404 if no future appointments),
+        // we can treat it as no active appointment, or re-throw if it's a critical error.
+        // For now, let's just return null if no future appointments were found or an error occurred.
+        if (axios.isAxiosError(error) && error.response?.status === 404) {
+            console.log(`[API CLIENT] getActiveAppointment - No future appointments (404) for client ${clienteId}.`);
+            return null; // No future appointments found
         }
-        // For any other error, re-throw it.
-        throw error;
+        console.error(`[API CLIENT] getActiveAppointment - Erro ao buscar agendamentos ativos para cliente ${clienteId}:`, error.message);
+        throw error; // Re-throw other errors
     }
   },
 
@@ -108,7 +115,7 @@ export const api = {
    * Busca agendamentos futuros de um cliente.
    */
   async getFutureAppointments(clienteId: number): Promise<any[]> {
-    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}?status=futuro`);
+    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}`); // Removed ?status=futuro as the backend route for has-active-appointment doesn't use it.
     return response.data;
   },
 
