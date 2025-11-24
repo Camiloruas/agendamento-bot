@@ -1,6 +1,7 @@
 // bot-service/src/botService.ts
 
 import { api, AppointmentConflictError } from "./api-client"; // Importa o erro customizado
+import moment from 'moment'; // Import moment for date comparison
 
 // --- DEFINIÇÕES DE ESTADO E CONSTANTES ---
 

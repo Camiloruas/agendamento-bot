@@ -1,19 +1,19 @@
-2025/11/23-21:18:47.451 1335a Reusing MANIFEST /media/camilo/Documentos/camilo/cursos/curso-de-programação/projetos-GitHub/agendamento-bot/.wwebjs_auth/session-agendamento_barber_bot/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/11/23-21:18:47.459 1335a Recovering log #579
-2025/11/23-21:18:47.490 1335a Reusing old log /media/camilo/Documentos/camilo/cursos/curso-de-programação/projetos-GitHub/agendamento-bot/.wwebjs_auth/session-agendamento_barber_bot/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000579.log 
-2025/11/23-21:18:49.548 1335e Level-0 table #587: started
-2025/11/23-21:18:49.600 1335e Level-0 table #587: 311244 bytes OK
-2025/11/23-21:18:49.616 1335e Delete type=0 #579
-2025/11/23-21:18:49.618 1335e Manual compaction at level-0 from '\x00\x86\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x87\x00\x00\x00' @ 0 : 0; will stop at (end)
-2025/11/23-21:18:52.189 133a5 Compacting 1@1 + 4@2 files
-2025/11/23-21:18:52.449 133a5 Generated table #588@1: 87527 keys, 2238852 bytes
-2025/11/23-21:18:52.742 133a5 Generated table #589@1: 78822 keys, 2305290 bytes
-2025/11/23-21:18:53.021 133a5 Generated table #590@1: 34839 keys, 2204421 bytes
-2025/11/23-21:18:53.083 133a5 Generated table #591@1: 19980 keys, 540303 bytes
-2025/11/23-21:18:53.083 133a5 Compacted 1@1 + 4@2 files => 7288866 bytes
-2025/11/23-21:18:53.085 133a5 compacted to: files[ 0 0 4 0 0 0 0 ]
-2025/11/23-21:18:53.095 133a5 Delete type=2 #581
-2025/11/23-21:18:53.095 133a5 Delete type=2 #582
-2025/11/23-21:18:53.096 133a5 Delete type=2 #583
-2025/11/23-21:18:53.096 133a5 Delete type=2 #584
-2025/11/23-21:18:53.096 133a5 Delete type=2 #587
+2025/11/23-21:29:34.003 14884 Reusing MANIFEST /media/camilo/Documentos/camilo/cursos/curso-de-programação/projetos-GitHub/agendamento-bot/.wwebjs_auth/session-agendamento_barber_bot/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/11/23-21:29:34.010 14884 Recovering log #600
+2025/11/23-21:29:34.047 14884 Reusing old log /media/camilo/Documentos/camilo/cursos/curso-de-programação/projetos-GitHub/agendamento-bot/.wwebjs_auth/session-agendamento_barber_bot/Default/IndexedDB/https_web.whatsapp.com_0.indexeddb.leveldb/000600.log 
+2025/11/23-21:29:36.039 14840 Level-0 table #608: started
+2025/11/23-21:29:36.082 14840 Level-0 table #608: 478440 bytes OK
+2025/11/23-21:29:36.092 14840 Delete type=0 #600
+2025/11/23-21:29:36.093 14840 Manual compaction at level-0 from '\x00\x89\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x8a\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/11/23-21:29:38.110 1483f Compacting 1@1 + 4@2 files
+2025/11/23-21:29:38.312 1483f Generated table #609@1: 86777 keys, 2237008 bytes
+2025/11/23-21:29:38.525 1483f Generated table #610@1: 84030 keys, 2313404 bytes
+2025/11/23-21:29:38.743 1483f Generated table #611@1: 36929 keys, 2206382 bytes
+2025/11/23-21:29:38.804 1483f Generated table #612@1: 21816 keys, 772047 bytes
+2025/11/23-21:29:38.804 1483f Compacted 1@1 + 4@2 files => 7528841 bytes
+2025/11/23-21:29:38.807 1483f compacted to: files[ 0 0 4 0 0 0 0 ]
+2025/11/23-21:29:38.816 1483f Delete type=2 #602
+2025/11/23-21:29:38.816 1483f Delete type=2 #603
+2025/11/23-21:29:38.816 1483f Delete type=2 #604
+2025/11/23-21:29:38.816 1483f Delete type=2 #605
+2025/11/23-21:29:38.816 1483f Delete type=2 #608
