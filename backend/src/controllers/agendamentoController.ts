@@ -328,7 +328,7 @@ export const getAgendamentosByCliente = async (req: AuthRequest, res: Response):
     });
 
     if (agendamentos.length === 0) {
-      return res.status(404).json({ message: "Nenhum agendamento encontrado para este cliente ou acesso negado." });
+      return res.status(200).json([]); // Retorna array vazio com status 200, não 404
     }
 
     return res.status(200).json(agendamentos);
