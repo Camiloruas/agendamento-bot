@@ -68,6 +68,8 @@ async function handleStart(conv: Conversation, input: string): Promise<string> {
   // Cliente já cadastrado:
   // Verifica se já tem agendamento ativo
   conv.activeAppointment = await api.getActiveAppointment(conv.clienteId);
+  console.log(`[handleStart] Active appointment para cliente ${conv.clienteId}:`, conv.activeAppointment);
+
 
   if (conv.activeAppointment) {
     conv.state = BotState.EXISTING_APPOINTMENT_MENU;
@@ -474,4 +476,5 @@ export async function handleIncomingMessage(telefone: string, message: string): 
     return "Desculpe, houve um erro técnico. Tente novamente mais tarde.";
   }
 }
+
 
