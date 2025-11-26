@@ -2,7 +2,11 @@ import { Model, DataTypes, Optional, Sequelize, BelongsToGetAssociationMixin } f
 import Cliente from "./Cliente";
 import Profissional from "./Profissional";
 
-// 1. Definição dos Atributos
+/**
+ * @interface AgendamentoAttributes
+ * @description Define a estrutura de um agendamento, servindo como um contrato para os tipos de dados.
+ * Isso garante consistência em toda a aplicação ao manipular objetos de agendamento.
+ */
 export interface AgendamentoAttributes {
   id: string;
   dataHora: Date;
@@ -13,10 +17,19 @@ export interface AgendamentoAttributes {
   status: 'Pendente' | 'Confirmado' | 'Cancelado';
 }
 
-// 2. Definição dos Atributos de Criação
+/**
+ * @interface AgendamentoCreationAttributes
+ * @description Define quais atributos são opcionais ao criar um novo agendamento.
+ * `id` é gerado automaticamente pelo banco de dados, e `descricao` e `status` têm valores padrão.
+ */
 export interface AgendamentoCreationAttributes extends Optional<AgendamentoAttributes, "id" | "descricao" | "status"> {}
 
-// 3. Classe do Modelo
+/**
+ * @class Agendamento
+ * @description Representa a tabela `agendamentos` no banco de dados.
+ * Este modelo encapsula toda a lógica de negócio e as definições de dados para agendamentos,
+ * incluindo seus campos, tipos e relacionamentos.
+ */
 export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreationAttributes> {
   declare id: string;
   declare dataHora: Date;
@@ -29,11 +42,18 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
   declare readonly createdAt: Date;
   declare readonly updatedAt: Date;
 
-  // Mixins de associação para o TypeScript
+  // Mixins fornecidos pelo Sequelize para habilitar o type-checking em associações.
+  // Permitem, por exemplo, chamar `agendamento.getCliente()` com segurança de tipo.
   declare getCliente: BelongsToGetAssociationMixin<Cliente>;
   declare readonly cliente?: Cliente;
   declare readonly profissional?: Profissional;
 
+  /**
+   * @function initialize
+   * @description Inicializa o modelo, definindo seus campos e configurações.
+   * É chamado centralmente no `server.ts` para registrar o modelo na instância do Sequelize.
+   * @param sequelize - A instância do Sequelize.
+   */
   public static initialize(sequelize: Sequelize): void {
     Agendamento.init(
       {
@@ -77,20 +97,25 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
     );
   }
 
+  /**
+   * @function associate
+   * @description Define os relacionamentos (associações) deste modelo com outros.
+   * É chamado no `server.ts` após todos os modelos serem inicializados para evitar problemas de referência circular.
+   */
   public static associate(): void {
-    // Relação com Profissional
+    // Um agendamento pertence a um único profissional.
     this.belongsTo(Profissional, {
       foreignKey: "profissionalId",
       as: "profissional",
-      onDelete: "CASCADE",
+      onDelete: "CASCADE", // Se um profissional for deletado, seus agendamentos também serão.
       onUpdate: "CASCADE",
     });
 
-    // Relação com Cliente
+    // Um agendamento pertence a um único cliente.
     this.belongsTo(Cliente, {
       foreignKey: "clienteId",
       as: "cliente",
-      onDelete: "CASCADE",
+      onDelete: "CASCADE", // Se um cliente for deletado, seus agendamentos também serão.
       onUpdate: "CASCADE",
     });
   }

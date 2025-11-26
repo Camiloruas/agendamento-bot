@@ -6,16 +6,15 @@ import {
     getAgendamentoById, 
     deleteAgendamento, 
     updateAgendamento,
-    getAvailableSlots, // Importe a nova função
-    getAgendamentosByCliente, // Importe a nova função
-    hasActiveAgendamento, // Importe a nova função
+    getAvailableSlots, 
+    getAgendamentosByCliente, 
+    hasActiveAgendamento, 
     getAgendamentosByDate
 } from "../controllers/agendamentoController";
 
 const router = Router();
 
-// ROTA PROTEGIDA: Apenas usuários autenticados podem criar agendamentos
-// URL final será: POST /api/agendamentos
+
 router.post("/", protect, createAgendamento);
 router.get("/", protect, getAllAgendamentos);
 router.get("/by-date", protect, getAgendamentosByDate);
@@ -23,13 +22,13 @@ router.get("/:id", protect, getAgendamentoById);
 router.delete("/:id", protect, deleteAgendamento);
 router.put("/:id", protect, updateAgendamento);
 
-// NOVA ROTA PROTEGIDA: GET /api/agendamentos/available-slots
+
 router.get("/available-slots", protect, getAvailableSlots);
 
-// NOVA ROTA PROTEGIDA: GET /api/agendamentos/cliente/:clienteId
+
 router.get("/cliente/:clienteId", protect, getAgendamentosByCliente);
 
-// NOVA ROTA PROTEGIDA: GET /api/agendamentos/has-active-appointment/:clienteId
+
 router.get("/has-active-appointment/:clienteId", protect, hasActiveAgendamento);
 
 export default router;

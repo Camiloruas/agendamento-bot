@@ -1,14 +1,11 @@
-// bot-service/src/botService.ts
 
-import { api, AppointmentConflictError } from "./api-client"; // Importa o erro customizado
-import moment from 'moment'; // Import moment for date comparison
+import { api, AppointmentConflictError } from "./api-client"; 
+import moment from 'moment'; 
 
-// --- DEFINIÇÕES DE ESTADO E CONSTANTES ---
 
-// Mapa para armazenar o estado da conversa de cada usuário
 export const conversations = new Map<string, Conversation>();
 
-// Enum para os estados da conversa
+
 export enum BotState {
   START,
   AWAITING_REGISTRATION_NAME,
@@ -20,28 +17,28 @@ export enum BotState {
   CONFIRMATION,
 }
 
-// Nova interface para os slots de horário
+
 interface TimeSlot {
   time: string;
   status: 'disponivel' | 'ocupado';
 }
 
-// Interface para o objeto de conversa
+
 export interface Conversation {
   state: BotState;
   clienteId: number | null;
   clienteNome: string | null;
   telefone: string;
-  isExistingUser: boolean; // Adicionar esta linha
+  isExistingUser: boolean; 
   selectedService: string | null;
   selectedDate: string | null;
   selectedTime: string | null;
-  activeAppointment: any | null; // Considere tipar melhor (Agendamento)
+  activeAppointment: any | null; 
   availableDates: string[];
-  availableTimes: TimeSlot[]; // Modificado para usar a nova interface
+  availableTimes: TimeSlot[]; 
 }
 
-// Constantes
+
 export const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 export const SERVICES = [
   { id: 1, servico_tag: "corte" },
@@ -49,25 +46,19 @@ export const SERVICES = [
   { id: 3, servico_tag: "corte_barba" },
 ];
 
-/**
- * Módulo de Lógica Principal do Bot.
- * Gerencia o estado da conversa e a interação com a API.
- */
 
-// --- Funções de Handler para cada Estado ---
 
-/**
- * Ponto de Início: Identifica se é cliente novo ou recorrente e direciona ao menu correto.
- */
+
+
 async function handleStart(conv: Conversation, input: string): Promise<string> {
-  // Se cliente não está cadastrado -> Iniciar Cadastro
+  
   if (!conv.clienteId) {
     conv.state = BotState.AWAITING_REGISTRATION_NAME;
     return "Olá! Bem-vindo ao nosso salão! Para fazermos o seu primeiro agendamento, preciso do seu nome completo:";
   }
 
-  // Cliente já cadastrado:
-  // Verifica se já tem agendamento ativo
+  
+  
   conv.activeAppointment = await api.getActiveAppointment(conv.clienteId);
   console.log(`[handleStart] Active appointment para cliente ${conv.clienteId}:`, conv.activeAppointment);
 
@@ -85,7 +76,7 @@ Deseja:
 3) Cancelar
 4) Novo agendamento`;
   } else {
-    // Se não tiver agendamento ativo, mostra o menu principal
+    
     conv.state = BotState.MAIN_MENU;
     return `Olá, ${conv.clienteNome}! Qual serviço deseja realizar hoje?
 1) Fazer um Novo Agendamento
@@ -94,9 +85,7 @@ Deseja:
   }
 }
 
-/**
- * Exibe e processa o Menu Principal.
- */
+
 async function showMainMenu(conv: Conversation): Promise<string> {
   conv.state = BotState.MAIN_MENU;
   return `Olá, ${conv.clienteNome}! Bem-vindo de volta 👋
@@ -135,13 +124,11 @@ async function handleMainMenu(conv: Conversation, input: string): Promise<string
   return `Opção inválida. Digite 1, 2 ou 0. ${await showMainMenu(conv)}`;
 }
 
-/**
- * Cadastro: Salva o nome e avança para o agendamento.
- */
+
 async function handleRegistration(conv: Conversation, input: string): Promise<string> {
   const nome = input.trim();
 
-  // If the user is already registered, redirect them to the main menu.
+  
   if (conv.isExistingUser) {
     conv.state = BotState.MAIN_MENU;
     return `Olá, ${conv.clienteNome}! Parece que você já está cadastrado. Como posso ajudar hoje? Digite o número da opção:
@@ -169,11 +156,11 @@ Qual serviço deseja realizar? Digite o número:
 0) Cancelar`;
   } catch (error: any) {
     console.error(`Erro ao criar cliente para ${conv.telefone}:`, error.response?.data || error.message);
-    // Assuming a 409 conflict for duplicate entry or similar.
-    // If the error message from the backend explicitly states "Cliente já existe", handle it.
+    
+    
     if (error.response && error.response.status === 409 || (error.response?.data?.message && error.response.data.message.includes("já existe"))) {
         conv.state = BotState.MAIN_MENU;
-        // Fetch client data again to ensure conv.clienteId and clienteNome are correctly populated if not already
+        
         const clienteData = await api.getClienteByTelefone(conv.telefone);
         if (clienteData) {
             conv.clienteId = clienteData.id;
@@ -189,9 +176,7 @@ Qual serviço deseja realizar? Digite o número:
   }
 }
 
-/**
- * Menu de Agendamento Ativo: Opções para Remarcar/Cancelar/Novo.
- */
+
 async function handleExistingAppointmentMenu(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
 
@@ -228,9 +213,7 @@ Qual serviço deseja realizar? Digite o número:
   }
 }
 
-/**
- * Seleção de Serviço: Define o serviço e avança para a escolha do dia.
- */
+
 async function handleServiceSelection(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
   const selectedService = SERVICES.find((s) => s.id === selection);
@@ -265,9 +248,7 @@ async function handleServiceSelection(conv: Conversation, input: string): Promis
   return datesMessage;
 }
 
-/**
- * Seleção de Dia: Busca e exibe os horários com status (Disponível/Ocupado).
- */
+
 async function handleDaySelection(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
 
@@ -301,9 +282,7 @@ async function handleDaySelection(conv: Conversation, input: string): Promise<st
   return timesMessage;
 }
 
-/**
- * Seleção de Horário: Valida a escolha e avança para a confirmação.
- */
+
 async function handleTimeSelection(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
 
@@ -317,7 +296,7 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
 
   const selectedSlot = conv.availableTimes[selection - 1];
 
-  // Validação do status do slot escolhido
+  
   if (selectedSlot.status === 'ocupado') {
     let timesMessage = `❌ O horário ${selectedSlot.time} está ocupado. Por favor, escolha outro horário da lista abaixo:\n`;
     conv.availableTimes.forEach((slot, index) => {
@@ -326,7 +305,7 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
     timesMessage += `${index + 1}) ${slot.time} (${statusText}) ${statusEmoji}\n`;
     });
     timesMessage += "0) Voltar ao Menu Principal";
-    return timesMessage; // Permanece no mesmo estado e pede para escolher novamente
+    return timesMessage; 
   }
 
   conv.selectedTime = selectedSlot.time;
@@ -344,17 +323,15 @@ Favor conferir a data, podemos Confirmar?
 2) Não (Voltar ao menu)`;
 }
 
-/**
- * Confirmação: Salva o agendamento e trata conflitos.
- */
+
 async function handleConfirmation(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
 
-  if (selection === 2) { // Não
+  if (selection === 2) { 
     return await showMainMenu(conv);
   }
 
-  if (selection !== 1) { // Opção inválida
+  if (selection !== 1) { 
     return "Opção inválida. Digite 1 para confirmar ou 2 para voltar ao Menu Principal.";
   }
 
@@ -397,7 +374,7 @@ Aguardamos você, ${conv.clienteNome}! 😊`;
         return `❌ Ops! Parece que outra pessoa agendou neste mesmo horário. E não há mais horários para este dia. Por favor, escolha outro dia.`;
       }
 
-      let timesMessage = `❌ Ops! Parece que outra pessoa agendou neste mesmo horário. Mas ainda temos estes horários disponíveis para o dia ${new Date(conv.selectedDate + "T00:00:00Z").toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}:\n`;
+      let timesMessage = `❌ Ops! Parece que outra pessoa agou neste mesmo horário. Mas ainda temos estes horários disponíveis para o dia ${new Date(conv.selectedDate + "T00:00:00Z").toLocaleDateString("pt-BR", { day: '2-digit', month: '2-digit', timeZone: 'UTC' })}:\n`;
       freshSlots.forEach((slot, index) => {
         const statusEmoji = slot.status === 'disponivel' ? '✅' : '❌';
         const statusText = slot.status === 'disponivel' ? 'Disponível' : 'Ocupado';
@@ -413,9 +390,7 @@ Aguardamos você, ${conv.clienteNome}! 😊`;
   }
 }
 
-/**
- * Função principal que processa a mensagem recebida e retorna a resposta do bot.
- */
+
 export async function handleIncomingMessage(telefone: string, message: string): Promise<string> {
   try {
     let conv: Conversation;
@@ -433,7 +408,7 @@ export async function handleIncomingMessage(telefone: string, message: string): 
         clienteId: clienteData?.id || null,
         clienteNome: clienteData?.nome || null,
         telefone: telefone,
-        isExistingUser: !!clienteData?.id, // Add this line
+        isExistingUser: !!clienteData?.id, 
         selectedService: null,
         selectedDate: null,
         selectedTime: null,

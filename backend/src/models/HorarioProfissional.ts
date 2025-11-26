@@ -1,24 +1,33 @@
-// backend/src/models/HorarioProfissional.ts
-
 import { Model, DataTypes, Optional, Sequelize } from 'sequelize';
 import Profissional from './Profissional';
 
-// Atributos do modelo HorarioProfissional
+/**
+ * @interface HorarioProfissionalAttributes
+ * @description Descreve a estrutura de um registro de horário de trabalho de um profissional.
+ * Este modelo define os dias e horas em que um profissional está disponível para agendamentos.
+ */
 export interface HorarioProfissionalAttributes {
     id: string;
     profissionalId: string;
-    diaDaSemana: number; // 0 (Domingo) a 6 (Sábado)
-    ativo: boolean;
-    horarioInicio: string; // Formato "HH:MM"
-    horarioFim: string; // Formato "HH:MM"
-    almocoInicio: string; // Formato "HH:MM"
-    almocoFim: string; // Formato "HH:MM"
+    diaDaSemana: number; // 0 (Domingo) a 6 (Sábado), para alinhar com o padrão JavaScript `Date.getDay()`.
+    ativo: boolean; // Permite desativar um dia de trabalho sem apagar o registro.
+    horarioInicio: string; // Formato "HH:MM".
+    horarioFim: string; // Formato "HH:MM".
+    almocoInicio: string; // Formato "HH:MM", opcional.
+    almocoFim: string; // Formato "HH:MM", opcional.
 }
 
-// Atributos opcionais na criação
+/**
+ * @interface HorarioProfissionalCreationAttributes
+ * @description Define quais atributos são opcionais ao criar um novo registro de horário.
+ */
 interface HorarioProfissionalCreationAttributes extends Optional<HorarioProfissionalAttributes, 'id'> {}
 
-// Classe do Modelo
+/**
+ * @class HorarioProfissional
+ * @description Representa a tabela `horarios_profissionais`, que armazena a grade de trabalho
+ * semanal de cada profissional.
+ */
 export class HorarioProfissional extends Model<HorarioProfissionalAttributes, HorarioProfissionalCreationAttributes> {
     declare id: string;
     declare profissionalId: string;
@@ -43,7 +52,7 @@ export class HorarioProfissional extends Model<HorarioProfissionalAttributes, Ho
                 type: DataTypes.UUID,
                 allowNull: false,
                 references: {
-                    model: 'profissionais', // Nome da tabela no DB
+                    model: 'profissionais', 
                     key: 'id',
                 },
             },
@@ -80,7 +89,8 @@ export class HorarioProfissional extends Model<HorarioProfissionalAttributes, Ho
             sequelize,
             tableName: 'horarios_profissionais',
             timestamps: true,
-            // Garante que um profissional só pode ter uma configuração por dia da semana
+            // Um índice único é crucial para garantir que não haja múltiplas configurações
+            // de horário para o mesmo profissional no mesmo dia da semana.
             indexes: [{
                 unique: true,
                 fields: ['profissionalId', 'diaDaSemana']
@@ -88,8 +98,8 @@ export class HorarioProfissional extends Model<HorarioProfissionalAttributes, Ho
         });
     }
 
-    // Define a associação com o Profissional
     public static associate(models: any): void {
+        // Define a relação de pertencimento: um horário pertence a um profissional.
         this.belongsTo(models.Profissional, {
             foreignKey: 'profissionalId',
             as: 'profissional',

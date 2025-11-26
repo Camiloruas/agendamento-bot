@@ -1,12 +1,16 @@
-// backend/src/controllers/clienteController.ts
-
 import { Request, Response } from 'express';
-import Cliente from '../models/Cliente'; // Importa o novo modelo
+import Cliente from '../models/Cliente'; 
 import Agendamento from '../models/Agendamento';
 
-// 1. Rota ÚTIL para o BOT: Buscar um cliente pelo telefone (número do WhatsApp)
+/**
+ * @function getClienteByTelefone
+ * @description Busca um cliente específico pelo seu número de telefone.
+ * Esta é uma rota crucial para o bot, que usa o número do WhatsApp como identificador primário.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns Retorna o cliente encontrado ou um erro 404 se não existir.
+ */
 export const getClienteByTelefone = async (req: Request, res: Response): Promise<Response> => {
-    // O telefone deve ser passado como parâmetro de consulta (query) na URL: /clientes?telefone=5585999999999
     const { telefone } = req.query;
 
     if (!telefone) {
@@ -30,21 +34,27 @@ export const getClienteByTelefone = async (req: Request, res: Response): Promise
     }
 };
 
-// 2. Rota ÚTIL para o BOT: Criar um novo cliente (quando o bot pede o nome)
+/**
+ * @function createCliente
+ * @description Cadastra um novo cliente no sistema.
+ * É utilizado pelo bot quando um novo usuário interage pela primeira vez e fornece seu nome.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns Retorna o cliente recém-criado.
+ */
 export const createCliente = async (req: Request, res: Response): Promise<Response> => {
     const { nome, telefone } = req.body;
 
-    // O bot DEVE garantir que o telefone já é o ID do WhatsApp
     if (!nome || !telefone) {
         return res.status(400).json({ message: "Nome e Telefone são obrigatórios." });
     }
 
     try {
-        // Verifica se o telefone já existe para evitar duplicidade
+        // A verificação de duplicidade é vital para manter a integridade dos dados,
+        // garantindo que cada número de telefone corresponda a um único cliente.
         const clienteExistente = await Cliente.findOne({ where: { telefone } });
         
         if (clienteExistente) {
-             // Se já existir, retornamos um 409 Conflict ou o cliente existente
              return res.status(409).json({ 
                  message: "Cliente com este telefone já cadastrado.", 
                  cliente: clienteExistente 
@@ -64,11 +74,19 @@ export const createCliente = async (req: Request, res: Response): Promise<Respon
     }
 };
 
-// 3. NOVA ROTA: Buscar todos os clientes
+/**
+ * @function getAllClientes
+ * @description Retorna uma lista de todos os clientes cadastrados.
+ * Útil para painéis administrativos e relatórios.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns Uma lista de todos os clientes.
+ */
 export const getAllClientes = async (req: Request, res: Response): Promise<Response> => {
     try {
         const clientes = await Cliente.findAll({
-            attributes: ['id', 'nome', 'telefone', 'createdAt', 'updatedAt'] // Excluir campos sensíveis se houver
+            // Seleciona explicitamente os atributos para evitar expor dados sensíveis.
+            attributes: ['id', 'nome', 'telefone', 'createdAt', 'updatedAt'] 
         });
         return res.status(200).json(clientes);
     } catch (error) {
@@ -77,13 +95,19 @@ export const getAllClientes = async (req: Request, res: Response): Promise<Respo
     }
 };
 
-// 4. NOVA ROTA: Buscar um cliente por ID
+/**
+ * @function getClienteById
+ * @description Busca um cliente pelo seu ID único, incluindo seus agendamentos associados.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns O cliente e seus agendamentos, ou um erro 404.
+ */
 export const getClienteById = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
 
     try {
         const cliente = await Cliente.findByPk(id, {
-            include: [{
+            include: [{ // Inclui agendamentos para fornecer uma visão completa do histórico do cliente.
                 model: Agendamento,
                 as: 'agendamentos'
             }]
@@ -100,7 +124,13 @@ export const getClienteById = async (req: Request, res: Response): Promise<Respo
     }
 };
 
-// 5. NOVA ROTA: Atualizar um cliente por ID
+/**
+ * @function updateCliente
+ * @description Atualiza os dados de um cliente existente (nome e/ou telefone).
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns O cliente com os dados atualizados.
+ */
 export const updateCliente = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
     const { nome, telefone } = req.body;
@@ -112,6 +142,7 @@ export const updateCliente = async (req: Request, res: Response): Promise<Respon
             return res.status(404).json({ message: "Cliente não encontrado." });
         }
 
+        // Atualiza os campos apenas se eles forem fornecidos na requisição.
         cliente.nome = nome || cliente.nome;
         cliente.telefone = telefone || cliente.telefone;
 
@@ -124,7 +155,14 @@ export const updateCliente = async (req: Request, res: Response): Promise<Respon
     }
 };
 
-// 6. NOVA ROTA: Deletar um cliente por ID
+/**
+ * @function deleteCliente
+ * @description Remove um cliente do banco de dados.
+ * A exclusão em cascata (configurada no modelo Agendamento) removerá também seus agendamentos.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns Uma mensagem de sucesso.
+ */
 export const deleteCliente = async (req: Request, res: Response): Promise<Response> => {
     const { id } = req.params;
 

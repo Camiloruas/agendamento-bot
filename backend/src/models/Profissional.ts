@@ -1,9 +1,9 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import * as bcrypt from "bcrypt";
 
-// 1. Interface de Atributos (Tipagem para o objeto lido/escrito no DB)
+
 export interface ProfissionalAttributes {
-    id: string; // Usaremos UUID para o ID (padrão em projetos modernos)
+    id: string; 
     nome: string;
     email: string;
     senha: string;
@@ -11,12 +11,12 @@ export interface ProfissionalAttributes {
     updatedAt?: Date;
 }
 
-// 2. Interface de Criação (Opcionais no momento da Criação)
+
 export interface ProfissionalCreationAttributes extends Optional<ProfissionalAttributes, "id" | "createdAt" | "updatedAt"> {}
 
-// 3. Classe do Modelo (A Implementação do Sequelize)
+
 export class Profissional extends Model<ProfissionalAttributes, ProfissionalCreationAttributes> {
-    // Usamos 'declare' para informar ao TypeScript sobre os campos, sem interferir no Sequelize.
+    
     declare id: string;
     declare nome: string;
     declare email: string;
@@ -29,7 +29,7 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
             {
                 id: {
                     type: DataTypes.UUID,
-                    defaultValue: DataTypes.UUIDV4, // Gera um ID único automático
+                    defaultValue: DataTypes.UUIDV4, 
                     allowNull: false,
                     primaryKey: true,
                 },
@@ -40,7 +40,7 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
                 email: {
                     type: DataTypes.STRING,
                     allowNull: false,
-                    unique: true, // Garante que não haverá emails duplicados
+                    unique: true, 
                 },
                 senha: {
                     type: DataTypes.STRING,
@@ -48,15 +48,15 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
                 },
             },
             {
-                sequelize, // A instância de conexão
-                tableName: "profissionais", // Nome da tabela no banco de dados
-                timestamps: true, // Mantém os campos createdAt e updatedAt
+                sequelize, 
+                tableName: "profissionais", 
+                timestamps: true, 
                 modelName: "Profissional",
             }
         );
 
         Profissional.beforeCreate(async (profissional: any) => {
-            // TIPAGEM TEMPORÁRIA 'any' no hook para garantir que o bcrypt funcione em runtime.
+            
             const senhaTextoPlano = profissional.senha as string; 
 
             if (!senhaTextoPlano) {
@@ -70,7 +70,7 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
         });
     }
 
-    // Define as associações
+    
     public static associate(models: any): void {
         this.hasMany(models.Agendamento, {
             foreignKey: 'profissionalId',
@@ -83,5 +83,5 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
     }
 }
 
-// Exportamos o modelo final
+
 export default Profissional;
