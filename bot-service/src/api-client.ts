@@ -1,14 +1,19 @@
-// bot-service/src/api-client.ts
-
 import axios from 'axios';
-import moment from 'moment'; // Import moment for date comparison
+import moment from 'moment'; 
 
-// URL base da sua API de backend
+// Define a URL base para todas as chamadas à API do backend.
+// Usar uma variável de ambiente aqui torna o código portável entre diferentes ambientes (desenvolvimento, produção).
 const API_BASE_URL = process.env.BACKEND_API_URL || 'http://localhost:3001/api';
 
+// Armazena o ID do profissional logado para ser usado em requisições subsequentes.
 let profissionalId: number | null = null;
 
-// Erro customizado para conflitos de agendamento
+/**
+ * @class AppointmentConflictError
+ * @description Erro customizado para ser lançado quando a API retorna um status 409 (Conflito).
+ * Isso permite que a lógica do bot trate especificamente a situação em que um horário
+ * acabou de ser agendado por outra pessoa, oferecendo uma experiência de usuário mais refinada.
+ */
 export class AppointmentConflictError extends Error {
   constructor(message: string) {
     super(message);
@@ -16,9 +21,17 @@ export class AppointmentConflictError extends Error {
   }
 }
 
+/**
+ * @const api
+ * @description Centraliza todas as interações com a API de backend em um único objeto.
+ * Este padrão (conhecido como "Adapter" ou "Service Layer") desacopla a lógica de negócio do bot
+ * dos detalhes de implementação da comunicação HTTP, facilitando a manutenção e os testes.
+ */
 export const api = {
   /**
-   * Realiza o login de um profissional e armazena o token globalmente para o Axios.
+   * @method loginProfissional
+   * @description Autentica o profissional no backend e armazena o token JWT globalmente no Axios.
+   * Isso garante que todas as futuras requisições do bot para a API sejam autenticadas.
    */
   async loginProfissional(email: string, password: string): Promise<string> {
     console.log(`[API CLIENT] Tentando login para ${email}...`);
@@ -27,20 +40,15 @@ export const api = {
         email: email,
         senha: password,
       });
-
       const { token, profissional } = response.data;
+      if (!token) throw new Error("Token não recebido da API de login.");
 
-      if (!token) {
-        throw new Error("Token não recebido da API de login.");
-      }
-
-      // Armazena o ID do profissional e define o token para todas as requisições futuras
       profissionalId = profissional.id;
+      // Configura o token no cabeçalho `Authorization` para todas as chamadas futuras do Axios.
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
       console.log(`[API CLIENT] Login para ${profissional.nome} realizado com sucesso!`);
       return token;
-
     } catch (error: any) {
       console.error('[API CLIENT] Erro no login do profissional:', error.response?.data?.message || error.message);
       throw new Error('Falha no login do profissional.');
@@ -48,14 +56,17 @@ export const api = {
   },
 
   /**
-   * Retorna o ID do profissional logado.
+   * @method getProfissionalId
+   * @description Retorna o ID do profissional atualmente logado.
    */
   getProfissionalId(): number | null {
     return profissionalId;
   },
 
   /**
-   * Busca um cliente pelo número de telefone.
+   * @method getClienteByTelefone
+   * @description Busca um cliente pelo número de telefone. Retorna `null` se não encontrado (404),
+   * o que é um fluxo esperado quando um novo cliente interage com o bot.
    */
   async getClienteByTelefone(telefone: string): Promise<any> {
     try {
@@ -64,19 +75,18 @@ export const api = {
       return response.data;
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response) {
+        if (error.response.status === 404) return null; // Comportamento esperado: cliente não existe.
         console.warn(`[API CLIENT] getClienteByTelefone - Erro de resposta da API para ${telefone}: Status ${error.response.status}, Data:`, error.response.data);
-        if (error.response.status === 404) {
-          return null; // Cliente não encontrado
-        }
       } else {
         console.error('[API CLIENT] getClienteByTelefone - Erro desconhecido ao buscar cliente:', error.message);
       }
-      throw error; // Re-lança outros erros
+      throw error; 
     }
   },
 
   /**
-   * Cria um novo cliente.
+   * @method createCliente
+   * @description Envia uma requisição para criar um novo cliente no backend.
    */
   async createCliente(nome: string, telefone: string): Promise<any> {
     const response = await axios.post(`${API_BASE_URL}/clientes`, { nome, telefone });
@@ -84,72 +94,67 @@ export const api = {
   },
 
   /**
-   * Busca o agendamento ativo de um cliente.
+   * @method getActiveAppointment
+   * @description Verifica se um cliente possui um agendamento ativo (status 'Pendente' ou 'Confirmado' no futuro).
    */
   async getActiveAppointment(clienteId: number): Promise<any> {
     try {
         const futureAppointments = await api.getFutureAppointments(clienteId);
-        console.log(`[API CLIENT] getActiveAppointment - Future appointments para cliente ${clienteId}:`, futureAppointments);
         const now = moment();
-
-        // Filter for the first active appointment (Pendente or Confirmado) that is in the future
         const activeAppointment = futureAppointments.find(app =>
             ['Pendente', 'Confirmado'].includes(app.status) && moment(app.dataHora).isSameOrAfter(now)
         );
-        console.log(`[API CLIENT] getActiveAppointment - Active appointment found:`, activeAppointment);
         return activeAppointment || null;
     } catch (error: any) {
-        // If getFutureAppointments throws an error (e.g., 404 if no future appointments),
-        // we can treat it as no active appointment, or re-throw if it's a critical error.
-        // For now, let's just return null if no future appointments were found or an error occurred.
         if (axios.isAxiosError(error) && error.response?.status === 404) {
-            console.log(`[API CLIENT] getActiveAppointment - No future appointments (404) for client ${clienteId}.`);
-            return null; // No future appointments found
+            return null; // Nenhum agendamento futuro encontrado, logo, nenhum ativo.
         }
         console.error(`[API CLIENT] getActiveAppointment - Erro ao buscar agendamentos ativos para cliente ${clienteId}:`, error.message);
-        throw error; // Re-throw other errors
+        throw error;
     }
   },
 
   /**
-   * Busca agendamentos futuros de um cliente.
+   * @method getFutureAppointments
+   * @description Busca todos os agendamentos futuros de um cliente.
    */
   async getFutureAppointments(clienteId: number): Promise<any[]> {
-    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}`); // Removed ?status=futuro as the backend route for has-active-appointment doesn't use it.
+    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}`); 
     return response.data;
   },
 
   /**
-   * Cancela um agendamento.
+   * @method cancelAgendamento
+   * @description Envia uma requisição para cancelar um agendamento específico.
    */
   async cancelAgendamento(agendamentoId: number): Promise<void> {
     await axios.delete(`${API_BASE_URL}/agendamentos/${agendamentoId}`);
   },
 
   /**
-   * Busca os dias disponíveis para agendamento.
+   * @method getAvailableDates
+   * @description Busca os dias disponíveis para agendamento com o profissional logado.
    */
   async getAvailableDates(): Promise<string[]> {
-    if (!this.getProfissionalId()) {
-      throw new Error("ID do profissional não definido para buscar datas.");
-    }
+    if (!this.getProfissionalId()) throw new Error("ID do profissional não definido para buscar datas.");
     const response = await axios.get(`${API_BASE_URL}/horarios/dias-disponiveis/${this.getProfissionalId()}`);
     return response.data;
   },
 
   /**
-   * Busca os horários disponíveis para um dia específico.
+   * @method getAvailableSlots
+   * @description Busca os horários (slots) disponíveis para uma data específica com o profissional logado.
    */
   async getAvailableSlots(date: string): Promise<string[]> {
-    if (!this.getProfissionalId()) {
-      throw new Error("ID do profissional não definido para buscar horários.");
-    }
+    if (!this.getProfissionalId()) throw new Error("ID do profissional não definido para buscar horários.");
     const response = await axios.get(`${API_BASE_URL}/horarios/horarios-disponiveis/${this.getProfissionalId()}/${date}`);
     return response.data;
   },
 
   /**
-   * Cria um novo agendamento.
+   * @method createAgendamento
+   * @description Envia a requisição final para criar o agendamento no backend.
+   * Trata especificamente o erro de conflito (409) para lançar o `AppointmentConflictError`.
    */
   async createAgendamento(data: any): Promise<any> {
     try {
@@ -157,10 +162,8 @@ export const api = {
       return response.data;
     } catch (error: any) {
       if (axios.isAxiosError(error) && error.response?.status === 409) {
-        // Lança um erro específico para conflito de agendamento
         throw new AppointmentConflictError(error.response.data.message || 'Este horário já foi agendado.');
       }
-      // Para outros erros, relança o erro original
       throw error;
     }
   }

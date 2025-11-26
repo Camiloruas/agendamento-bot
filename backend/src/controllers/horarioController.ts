@@ -1,14 +1,18 @@
-// backend/src/controllers/horarioController.ts
-
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import { AuthRequest } from '../middlewares/authMiddleware';
 import HorarioProfissional from '../models/HorarioProfissional';
 import Agendamento from '../models/Agendamento';
 import { HorarioProfissionalAttributes } from '../models/HorarioProfissional';
-import moment from 'moment-timezone'; // Importação explícita de moment-timezone
+import moment from 'moment-timezone'; 
 
-// Função para o profissional obter sua própria configuração de horários
+/**
+ * @function getHorarios
+ * @description Retorna a configuração de horários de trabalho (semanal) do profissional autenticado.
+ * @param req Objeto de requisição do Express, autenticado.
+ * @param res Objeto de resposta do Express.
+ * @returns Uma lista com a configuração de horários para cada dia da semana.
+ */
 export const getHorarios = async (req: AuthRequest, res: Response): Promise<Response> => {
     const profissionalId = req.userId;
 
@@ -29,7 +33,14 @@ export const getHorarios = async (req: AuthRequest, res: Response): Promise<Resp
     }
 };
 
-// Função para o profissional criar ou atualizar seus horários
+/**
+ * @function createOrUpdateHorarios
+ * @description Permite que um profissional crie ou atualize sua grade de horários de trabalho.
+ * Utiliza `upsert` para simplificar a lógica: insere se não existe, atualiza se já existe.
+ * @param req Objeto de requisição do Express, autenticado. O corpo deve conter um array de configurações de horário.
+ * @param res Objeto de resposta do Express.
+ * @returns Confirmação de sucesso e os dados atualizados.
+ */
 export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): Promise<Response> => {
     const profissionalId = req.userId;
     const horarios: HorarioProfissionalAttributes[] = req.body;
@@ -49,6 +60,7 @@ export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): P
                 return res.status(400).json({ message: `Horário inválido para o dia ${horario.diaDaSemana}. Campos obrigatórios faltando.` });
             }
 
+            // `upsert` é ideal aqui para evitar a necessidade de verificar manualmente se o registro já existe.
             const [resultado, criado] = await HorarioProfissional.upsert({
                 ...horario,
                 profissionalId: profissionalId,
@@ -67,15 +79,19 @@ export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): P
     }
 };
 
-// --- NOVAS FUNÇÕES ---
-
 /**
- * Retorna os próximos 30 dias em que o profissional trabalha.
+ * @function getDiasDisponiveis
+ * @description Retorna uma lista de datas para os próximos 30 dias em que um profissional trabalha.
+ * Essencial para o bot de agendamento mostrar ao cliente quais dias ele pode escolher.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns Um array de strings de data no formato 'YYYY-MM-DD'.
  */
 export const getDiasDisponiveis = async (req: Request, res: Response): Promise<Response> => {
     const { profissionalId } = req.params;
 
     try {
+        // Primeiro, busca-se quais dias da semana o profissional *costuma* trabalhar.
         const diasDeTrabalho = await HorarioProfissional.findAll({
             where: { profissionalId, ativo: true },
             attributes: ['diaDaSemana'],
@@ -85,6 +101,7 @@ export const getDiasDisponiveis = async (req: Request, res: Response): Promise<R
             return res.status(200).json([]);
         }
 
+        // Em seguida, projeta-se essa configuração para os próximos 30 dias.
         const diasDeTrabalhoSet = new Set(diasDeTrabalho.map(d => d.diaDaSemana));
         const datasDisponiveis = [];
         const hoje = new Date();
@@ -109,35 +126,35 @@ export const getDiasDisponiveis = async (req: Request, res: Response): Promise<R
 };
 
 /**
- * Retorna todos os horários de um profissional para uma data específica com seus respectivos status (Disponível/Ocupado).
+ * @function getHorariosDisponiveis
+ * @description Retorna os slots de horário de um dia específico, marcando-os como 'disponivel' ou 'ocupado'.
+ * Esta é a lógica central para a disponibilidade, cruzando o horário de trabalho do profissional com os agendamentos já existentes.
+ * @param req Objeto de requisição do Express.
+ * @param res Objeto de resposta do Express.
+ * @returns Um array de objetos, cada um representando um slot de tempo com seu status.
  */
 export const getHorariosDisponiveis = async (req: Request, res: Response): Promise<Response> => {
     const { profissionalId, date } = req.params;
 
-    // A validação de data já foi feita em api-client.ts antes de chamar esta rota.
-    // Garante que o profissionalId é UUID
     if (!profissionalId || !/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(profissionalId)) {
         return res.status(400).json({ message: "ID do profissional inválido." });
     }
 
-    const TIMEZONE = 'America/Sao_Paulo'; // Fuso horário a ser usado para o profissional
+    const TIMEZONE = 'America/Sao_Paulo'; // É crucial definir um fuso horário para consistência.
 
     try {
-        const selectedDate = moment.utc(date as string); // Continua sendo UTC para o dia (YYYY-MM-DD)
-        const dayOfWeek = selectedDate.day(); // 0 (Domingo) a 6 (Sábado)
+        const selectedDate = moment.utc(date as string); 
+        const dayOfWeek = selectedDate.day(); 
 
-        // 1. Buscar a configuração de horário do profissional para o dia da semana
         const horarioConfig = await HorarioProfissional.findOne({
             where: { profissionalId, diaDaSemana: dayOfWeek, ativo: true },
         });
 
-        // Se não houver configuração de horário, retorna uma lista vazia.
         if (!horarioConfig) {
-            return res.status(200).json([]); // Não trabalha neste dia
+            return res.status(200).json([]); 
         }
 
-        // 2. Buscar agendamentos existentes para o profissional na data selecionada (em UTC)
-        // Precisamos dos agendamentos no fuso horário do profissional para comparar corretamente
+        // Busca agendamentos existentes no fuso horário local do profissional para evitar erros de um dia para o outro.
         const startOfDayInTimezone = moment.tz(date as string, TIMEZONE).startOf('day');
         const endOfDayInTimezone = moment.tz(date as string, TIMEZONE).endOf('day');
 
@@ -148,40 +165,36 @@ export const getHorariosDisponiveis = async (req: Request, res: Response): Promi
                     [Op.between]: [startOfDayInTimezone.clone().utc().toDate(), endOfDayInTimezone.clone().utc().toDate()],
                 },
                 status: {
-                    [Op.ne]: 'Cancelado', // Não considerar agendamentos cancelados
+                    [Op.ne]: 'Cancelado', 
                 },
             },
             attributes: ['dataHora'],
         });
 
-        // Formata os horários agendados para 'HH:mm' NO FUSO HORÁRIO DO PROFISSIONAL e usa um Set para busca eficiente
         const bookedTimes = new Set(existingAppointments.map(app => moment.tz(app.dataHora, TIMEZONE).format('HH:mm')));
 
-        // 3. Gerar todos os slots do dia com seus status
+        // Gera todos os slots de horário possíveis para o dia.
         const allSlots: { time: string, status: 'disponivel' | 'ocupado' }[] = [];
         
-        // Combina a data selecionada com a hora inicial e final, tratando como o fuso horário do profissional
         const currentTime = moment.tz(`${date} ${horarioConfig.horarioInicio}`, 'YYYY-MM-DD HH:mm', TIMEZONE);
         const endTime = moment.tz(`${date} ${horarioConfig.horarioFim}`, 'YYYY-MM-DD HH:mm', TIMEZONE);
         const lunchStart = horarioConfig.almocoInicio ? moment.tz(`${date} ${horarioConfig.almocoInicio}`, 'YYYY-MM-DD HH:mm', TIMEZONE) : null;
         const lunchEnd = horarioConfig.almocoFim ? moment.tz(`${date} ${horarioConfig.almocoFim}`, 'YYYY-MM-DD HH:mm', TIMEZONE) : null;
 
-        // Itera sobre os horários do dia, de hora em hora (ou conforme a duração do slot)
+        // Itera sobre o expediente, slot a slot, para determinar a disponibilidade.
         while (currentTime.isBefore(endTime)) {
-            // Se o horário atual cair dentro da janela de almoço, avança o tempo para o fim do almoço
-            // currentTime e lunchStart/End já estão no fuso horário correto
+            // Verifica e pula o horário de almoço, se configurado.
             if (lunchStart && lunchEnd && currentTime.isBetween(lunchStart, lunchEnd, null, '[)')) {
-                currentTime.add(1, 'hour'); // Pula o almoço
+                currentTime.add(1, 'hour'); 
                 continue; 
             }
 
-            const slotTime = currentTime.format('HH:mm'); // Formata a hora no fuso horário do profissional
+            const slotTime = currentTime.format('HH:mm'); 
             const status = bookedTimes.has(slotTime) ? 'ocupado' : 'disponivel';
             
             allSlots.push({ time: slotTime, status: status });
             
-            // Avança para o próximo slot (assumindo slots de 1 hora)
-            currentTime.add(1, 'hour');
+            currentTime.add(1, 'hour'); // Avança para o próximo slot.
         }
 
         return res.status(200).json(allSlots);

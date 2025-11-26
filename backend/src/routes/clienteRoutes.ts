@@ -1,5 +1,3 @@
-// backend/src/routes/clienteRoutes.ts
-
 import { Router } from "express";
 import { protect } from "../middlewares/authMiddleware";
 import { 
@@ -13,19 +11,26 @@ import {
 
 const router = Router();
 
-// Rota para buscar um cliente pelo telefone (usado pelo bot)
+/**
+ * @description Agrupa as rotas para o gerenciamento de clientes.
+ * Todas as rotas são protegidas, o que significa que um profissional deve estar
+ * autenticado para interagir com os dados dos clientes.
+ */
+
+// Rota otimizada para o bot: permite identificar um cliente rapidamente pelo seu número de WhatsApp.
 router.get('/by-phone', protect, getClienteByTelefone);
 
-// Rota para criar um novo cliente
+// Rota para o bot registrar um novo cliente que iniciou a conversa.
 router.post('/', protect, createCliente);
 
-// Rota para obter todos los clientes
+// Rota padrão para listar todos os clientes, útil para a interface de administração.
 router.get('/', protect, getAllClientes);
 
-// Rota para obter, atualizar e deletar um cliente por ID
+// Agrupa as operações de Leitura, Atualização e Deleção (RUD) para um cliente específico por ID.
+// Esta abordagem `router.route()` é uma maneira limpa de encadear múltiplos verbos HTTP para o mesmo caminho.
 router.route('/:id')
     .get(protect, getClienteById)
-        .put(protect, updateCliente)
+    .put(protect, updateCliente)
     .delete(protect, deleteCliente);
 
 export default router;

@@ -1,25 +1,25 @@
-// backend/src/routes/profissionalRoutes.ts
-
 import { Router } from "express";
-// 1. IMPORTAÇÃO DOS CONTROLLERS (createProfissional, loginProfissional, getAllProfissionais)
 import { createProfissional, loginProfissional, getAllProfissionais, getProfissionalProfile } from "../controllers/profissionalController";
-
-// 2. IMPORTAÇÃO DO MIDDLEWARE
 import { protect } from "../middlewares/authMiddleware"; 
 
 const router = Router();
 
-// Rota POST para criar um novo profissional
+/**
+ * @description Define as rotas para autenticação e gerenciamento de profissionais.
+ * A separação entre rotas públicas (`/register`, `/login`) e protegidas (`/`, `/profile`)
+ * é fundamental para a segurança do sistema.
+ */
+
+// Rota pública para registrar um novo profissional no sistema.
 router.post('/register', createProfissional);
 
-// Rota GET PROTEGIDA para listar profissionais
-router.get('/', protect, getAllProfissionais); 
-
-// Rota POST para login
+// Rota pública para que um profissional possa se autenticar e obter um token.
 router.post('/login', loginProfissional);
 
-// Rota GET para buscar o perfil do profissional autenticado
+// Rota protegida para listar todos os profissionais. Acessível apenas por usuários autenticados.
+router.get('/', protect, getAllProfissionais); 
+
+// Rota protegida para que um profissional autenticado possa obter seus próprios dados de perfil.
 router.get('/profile', protect, getProfissionalProfile);
 
-// Exporta o router
 export default router;

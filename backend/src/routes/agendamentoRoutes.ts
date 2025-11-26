@@ -6,16 +6,21 @@ import {
     getAgendamentoById, 
     deleteAgendamento, 
     updateAgendamento,
-    getAvailableSlots, // Importe a nova função
-    getAgendamentosByCliente, // Importe a nova função
-    hasActiveAgendamento, // Importe a nova função
+    getAvailableSlots, 
+    getAgendamentosByCliente, 
+    hasActiveAgendamento, 
     getAgendamentosByDate
 } from "../controllers/agendamentoController";
 
 const router = Router();
 
-// ROTA PROTEGIDA: Apenas usuários autenticados podem criar agendamentos
-// URL final será: POST /api/agendamentos
+/**
+ * @description Centraliza todas as rotas relacionadas a agendamentos.
+ * O uso do middleware `protect` garante que apenas usuários (profissionais) autenticados
+ * possam acessar estas rotas, protegendo os dados e a lógica de negócio.
+ */
+
+// Rotas para operações CRUD padrão em agendamentos.
 router.post("/", protect, createAgendamento);
 router.get("/", protect, getAllAgendamentos);
 router.get("/by-date", protect, getAgendamentosByDate);
@@ -23,13 +28,13 @@ router.get("/:id", protect, getAgendamentoById);
 router.delete("/:id", protect, deleteAgendamento);
 router.put("/:id", protect, updateAgendamento);
 
-// NOVA ROTA PROTEGIDA: GET /api/agendamentos/available-slots
+// Rota para consultar a disponibilidade. Usada pelo bot para mostrar horários ao cliente.
 router.get("/available-slots", protect, getAvailableSlots);
 
-// NOVA ROTA PROTEGIDA: GET /api/agendamentos/cliente/:clienteId
+// Rota para buscar todos os agendamentos de um cliente específico.
 router.get("/cliente/:clienteId", protect, getAgendamentosByCliente);
 
-// NOVA ROTA PROTEGIDA: GET /api/agendamentos/has-active-appointment/:clienteId
+// Rota de verificação rápida, usada pelo bot para determinar o fluxo da conversa (se o cliente já tem agendamento ativo).
 router.get("/has-active-appointment/:clienteId", protect, hasActiveAgendamento);
 
 export default router;

@@ -1,9 +1,13 @@
 import { Model, DataTypes, Optional, Sequelize } from "sequelize";
 import * as bcrypt from "bcrypt";
 
-// 1. Interface de Atributos (Tipagem para o objeto lido/escrito no DB)
+/**
+ * @interface ProfissionalAttributes
+ * @description Define a estrutura dos atributos de um profissional, que é a entidade central
+ * do sistema, responsável por realizar os agendamentos.
+ */
 export interface ProfissionalAttributes {
-    id: string; // Usaremos UUID para o ID (padrão em projetos modernos)
+    id: string; 
     nome: string;
     email: string;
     senha: string;
@@ -11,12 +15,19 @@ export interface ProfissionalAttributes {
     updatedAt?: Date;
 }
 
-// 2. Interface de Criação (Opcionais no momento da Criação)
+/**
+ * @interface ProfissionalCreationAttributes
+ * @description Define os atributos opcionais durante a criação de um profissional.
+ * `id`, `createdAt`, e `updatedAt` são gerenciados automaticamente.
+ */
 export interface ProfissionalCreationAttributes extends Optional<ProfissionalAttributes, "id" | "createdAt" | "updatedAt"> {}
 
-// 3. Classe do Modelo (A Implementação do Sequelize)
+/**
+ * @class Profissional
+ * @description Representa a tabela `profissionais`. Este modelo inclui a lógica de negócio
+ * crucial para a segurança, como a criptografia de senhas.
+ */
 export class Profissional extends Model<ProfissionalAttributes, ProfissionalCreationAttributes> {
-    // Usamos 'declare' para informar ao TypeScript sobre os campos, sem interferir no Sequelize.
     declare id: string;
     declare nome: string;
     declare email: string;
@@ -29,7 +40,7 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
             {
                 id: {
                     type: DataTypes.UUID,
-                    defaultValue: DataTypes.UUIDV4, // Gera um ID único automático
+                    defaultValue: DataTypes.UUIDV4, 
                     allowNull: false,
                     primaryKey: true,
                 },
@@ -40,7 +51,7 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
                 email: {
                     type: DataTypes.STRING,
                     allowNull: false,
-                    unique: true, // Garante que não haverá emails duplicados
+                    unique: true, // Garante que cada profissional tenha um email único.
                 },
                 senha: {
                     type: DataTypes.STRING,
@@ -48,30 +59,36 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
                 },
             },
             {
-                sequelize, // A instância de conexão
-                tableName: "profissionais", // Nome da tabela no banco de dados
-                timestamps: true, // Mantém os campos createdAt e updatedAt
+                sequelize, 
+                tableName: "profissionais", 
+                timestamps: true, 
                 modelName: "Profissional",
             }
         );
 
+        /**
+         * @hook beforeCreate
+         * @description Este hook do Sequelize é acionado automaticamente antes de um novo
+         * profissional ser salvo no banco de dados. Sua finalidade é interceptar a senha
+         * em texto plano e substituí-la por um hash seguro, garantindo que senhas
+         * nunca sejam armazenadas de forma desprotegida.
+         */
         Profissional.beforeCreate(async (profissional: any) => {
-            // TIPAGEM TEMPORÁRIA 'any' no hook para garantir que o bcrypt funcione em runtime.
             const senhaTextoPlano = profissional.senha as string; 
 
             if (!senhaTextoPlano) {
                 throw new Error("Senha não fornecida para criptografia.");
             }
 
-            const saltRounds = 8;
+            const saltRounds = 8; // O "custo" da criptografia. Um valor maior é mais seguro, porém mais lento.
             const hashedPassword = await bcrypt.hash(senhaTextoPlano, saltRounds);
 
             profissional.senha = hashedPassword;
         });
     }
 
-    // Define as associações
     public static associate(models: any): void {
+        // Um profissional pode ter muitos agendamentos e várias configurações de horário.
         this.hasMany(models.Agendamento, {
             foreignKey: 'profissionalId',
             as: 'agendamentos',
@@ -83,5 +100,4 @@ export class Profissional extends Model<ProfissionalAttributes, ProfissionalCrea
     }
 }
 
-// Exportamos o modelo final
 export default Profissional;
