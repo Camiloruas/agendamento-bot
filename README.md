@@ -92,7 +92,7 @@ WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 ### Inicialização do Servidor
 
 1.  **Configure o Banco de Dados:**
-    Crie o banco de dados `agendamento_bot` (ou o nome que você definiu em `DB_NAME`) no seu servidor MariaDB. O projeto pode incluir scripts de migração ou inicialização de schema; verifique a pasta `database` ou `src/database` se existirem.
+    Crie o banco de dados `agendamento_bot` (ou o nome que você definiu em `DB_NAME`) no seu servidor MariaDB. O projeto pode incluir scripts de migração ou inicialização de schema; verifique a pasta `database` você irá localizar em `backend/src/database` .
 2.  **Inicie o Servidor:**
     ```bash
     npm run dev

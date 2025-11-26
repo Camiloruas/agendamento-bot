@@ -6,3 +6,5 @@ ROUTES_FOR_TESTING.md
 DEVELOPMENT_LOG.md
 .wwebjs_cache
 .wwebjs_auth
+docs
+backend/docs/
