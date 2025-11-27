@@ -2,6 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import express, { Express, Request, Response } from "express";
+import cors from "cors";
 import profissionalRoutes from "./routes/profissionalRoutes";
 import agendamentoRoutes from "./routes/agendamentoRoutes";
 import clienteRoutes from "./routes/clienteRoutes";
@@ -29,6 +30,8 @@ const app: Express = express();
 
 // Middleware para permitir que o Express analise o corpo das requisições JSON.
 app.use(express.json());
+// Configurar CORS para permitir requisições do frontend
+app.use(cors({ origin: 'http://localhost:5173' }));
 
 // Associa as rotas principais da aplicação a seus respectivos módulos de roteamento.
 // O prefixo "/api" é usado como uma boa prática para versionamento e clareza.

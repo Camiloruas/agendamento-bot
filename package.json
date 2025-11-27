@@ -23,9 +23,11 @@
   },
   "homepage": "https://github.com/Camiloruas/agendamento-bot#readme",
   "dependencies": {
+    "@types/cors": "^2.8.19",
     "@types/moment-timezone": "^0.5.13",
     "axios": "^1.7.2",
     "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
