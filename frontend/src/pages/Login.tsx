@@ -1,29 +1,35 @@
 // frontend/src/pages/Login.tsx
 
 import React, { useState } from 'react';
+import authService from '../services/authService'; // Importe o authService
+import { useNavigate } from 'react-router-dom'; // Importe useNavigate para redirecionamento
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false); // Novo estado para loading
+  const navigate = useNavigate(); // Hook para navegação
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => { // Tornar a função assíncrona
     e.preventDefault();
     setError(''); // Limpa erros anteriores
+    setLoading(true); // Ativa o estado de loading
 
-    // Lógica de validação e chamada à API virá aqui
     if (!email || !password) {
       setError('Por favor, preencha todos os campos.');
+      setLoading(false); // Desativa o loading
       return;
     }
 
-    console.log('Tentando logar com:', { email, password });
-    // Simulando uma chamada de API
-    if (email === 'test@example.com' && password === 'password') {
-      console.log('Login bem-sucedido!');
-      // Redirecionar para o dashboard ou armazenar token
-    } else {
-      setError('Email ou senha inválidos.');
+    try {
+      await authService.login(email, password);
+      // Se o login for bem-sucedido, redireciona para o dashboard
+      navigate('/dashboard'); // Redirecionar para o dashboard (será criado depois)
+    } catch (err: any) {
+      setError(err.message || 'Ocorreu um erro inesperado.');
+    } finally {
+      setLoading(false); // Desativa o loading, independente do sucesso ou falha
     }
   };
 
@@ -39,6 +45,7 @@ const Login: React.FC = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={loading} // Desabilita o input durante o loading
           />
         </div>
         <div className="form-group">
@@ -49,10 +56,13 @@ const Login: React.FC = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading} // Desabilita o input durante o loading
           />
         </div>
         {error && <p className="error-message">{error}</p>}
-        <button type="submit">Entrar</button>
+        <button type="submit" disabled={loading}>
+          {loading ? 'Entrando...' : 'Entrar'} {/* Muda o texto do botão durante o loading */}
+        </button>
       </form>
       <p>
         Não tem uma conta? <a href="/register">Crie sua conta</a>
