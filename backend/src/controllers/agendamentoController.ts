@@ -141,15 +141,19 @@ export const getAgendamentoById = async (req: AuthRequest, res: Response): Promi
   if (!profissionalId) {
     return res.status(401).json({ message: "Profissional não autenticado." });
   }
+  
+  if (!id) {
+    return res.status(400).json({ message: "O ID do agendamento é obrigatório." });
+  }
 
   try {
     const agendamento = await Agendamento.findOne({
       where: {
         id: id,
-        profissionalId: profissionalId, // Cláusula de segurança para garantir o pertencimento.
+        profissionalId: profissionalId,
       },
       include: [
-        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email"] },
+        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email", "telefone"] },
         { model: Cliente, as: 'cliente', attributes: ["id", "nome", "telefone"] }
       ],
     });
@@ -178,6 +182,10 @@ export const deleteAgendamento = async (req: AuthRequest, res: Response): Promis
 
   if (!profissionalId) {
     return res.status(401).json({ message: "Profissional não autenticado." });
+  }
+  
+  if (!id) {
+    return res.status(400).json({ message: "O ID do agendamento é obrigatório." });
   }
 
   try {
@@ -214,6 +222,10 @@ export const updateAgendamento = async (req: AuthRequest, res: Response): Promis
   if (!profissionalId) {
     return res.status(401).json({ message: "Profissional não autenticado." });
   }
+  
+  if (!id) {
+    return res.status(400).json({ message: "O ID do agendamento é obrigatório." });
+  }
 
   if (!dataHora && !descricao && !servico && !status) {
     return res.status(400).json({ message: "Pelo menos um campo deve ser fornecido para atualizar." });
@@ -236,7 +248,7 @@ export const updateAgendamento = async (req: AuthRequest, res: Response): Promis
 
     const agendamentoAtualizado = await Agendamento.findByPk(id, {
       include: [
-        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email"] },
+        { model: Profissional, as: 'profissional', attributes: ["id", "nome", "email", "telefone"] },
         { model: Cliente, as: 'cliente', attributes: ["id", "nome", "telefone"] }
       ],
     });
@@ -309,7 +321,7 @@ export const getAvailableSlots = async (req: AuthRequest, res: Response): Promis
 
     // Gera todos os possíveis slots de horário do dia, verificando o status de cada um.
     const allSlots: { time: string, status: 'disponivel' | 'ocupado' }[] = [];
-    const currentTime = moment.utc(`${date} ${horarioConfig.horarioInicio}`, 'YYYY-MM-DD HH:mm');
+    let currentTime = moment.utc(`${date} ${horarioConfig.horarioInicio}`, 'YYYY-MM-DD HH:mm');
     const endTime = moment.utc(`${date} ${horarioConfig.horarioFim}`, 'YYYY-MM-DD HH:mm');
     const lunchStart = horarioConfig.almocoInicio ? moment.utc(`${date} ${horarioConfig.almocoInicio}`, 'YYYY-MM-DD HH:mm') : null;
     const lunchEnd = horarioConfig.almocoFim ? moment.utc(`${date} ${horarioConfig.almocoFim}`, 'YYYY-MM-DD HH:mm') : null;

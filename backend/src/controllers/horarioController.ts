@@ -90,6 +90,10 @@ export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): P
 export const getDiasDisponiveis = async (req: Request, res: Response): Promise<Response> => {
     const { profissionalId } = req.params;
 
+    if (!profissionalId) {
+        return res.status(400).json({ message: "O ID do profissional é obrigatório." });
+    }
+
     try {
         // Primeiro, busca-se quais dias da semana o profissional *costuma* trabalhar.
         const diasDeTrabalho = await HorarioProfissional.findAll({
