@@ -5,7 +5,7 @@ import { DatabaseError } from "sequelize";
 import * as bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { AuthRequest } from "../middlewares/authMiddleware";
-import { getClienteByTelefone } from "./clienteController";
+import { getClienteByTelefone } from "./clienteController"; // Isso parece um import desnecessário aqui.
 
 /**
  * @function createProfissional
@@ -177,5 +177,118 @@ export const getProfissionalProfile = async (req: Request, res: Response): Promi
   } catch (error) {
     console.error("Erro ao buscar perfil do profissional:", error);
     return res.status(500).json({ message: "Erro interno ao buscar o perfil." });
+  }
+};
+
+/**
+ * @function updateProfissionalProfile
+ * @description Permite que um profissional autenticado atualize seus dados de perfil (nome, email, telefone).
+ * @param req Objeto de requisição do Express, autenticado, com os novos dados no corpo.
+ * @param res Objeto de resposta do Express.
+ * @returns O perfil do profissional atualizado (sem a senha).
+ */
+export const updateProfissionalProfile = async (req: AuthRequest, res: Response): Promise<Response> => {
+  const profissionalId = req.userId;
+  const { nome, email, telefone } = req.body;
+
+  if (!profissionalId) {
+    return res.status(401).json({ message: "Profissional não autenticado." });
+  }
+
+  try {
+    const profissional = await Profissional.findByPk(profissionalId);
+
+    if (!profissional) {
+      return res.status(404).json({ message: "Profissional não encontrado." });
+    }
+
+    // Verifica se o email já está em uso por outro profissional
+    if (email && email !== profissional.email) {
+      const existingProfissional = await Profissional.findOne({ where: { email } });
+      if (existingProfissional && existingProfissional.id !== profissionalId) {
+        return res.status(409).json({ message: "Erro: Email já está em uso por outro profissional." });
+      }
+    }
+    // Verifica se o telefone já está em uso por outro profissional
+    if (telefone && telefone !== profissional.telefone) {
+      const existingProfissional = await Profissional.findOne({ where: { telefone } });
+      if (existingProfissional && existingProfissional.id !== profissionalId) {
+        return res.status(409).json({ message: "Erro: Telefone já está em uso por outro profissional." });
+      }
+    }
+
+
+    profissional.nome = nome || profissional.nome;
+    profissional.email = email || profissional.email;
+    profissional.telefone = telefone || profissional.telefone;
+
+    await profissional.save();
+
+    const profissionalResponse = {
+      id: profissional.id,
+      nome: profissional.nome,
+      email: profissional.email,
+      telefone: profissional.telefone,
+      createdAt: profissional.createdAt,
+      updatedAt: profissional.updatedAt,
+    };
+
+    return res.status(200).json({
+      message: "Perfil atualizado com sucesso.",
+      profissional: profissionalResponse,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar perfil do profissional:", error);
+    return res.status(500).json({
+      message: "Erro interno ao atualizar o perfil.",
+      details: (error as Error).message,
+    });
+  }
+};
+
+/**
+ * @function changeProfissionalPassword
+ * @description Permite que um profissional autenticado altere sua senha.
+ * Requer a senha atual para verificação.
+ * @param req Objeto de requisição do Express, autenticado, com a senha atual e a nova senha no corpo.
+ * @param res Objeto de resposta do Express.
+ * @returns Uma mensagem de sucesso ou erro.
+ */
+export const changeProfissionalPassword = async (req: AuthRequest, res: Response): Promise<Response> => {
+  const profissionalId = req.userId;
+  const { currentPassword, newPassword } = req.body;
+
+  if (!profissionalId) {
+    return res.status(401).json({ message: "Profissional não autenticado." });
+  }
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ message: "Senha atual e nova senha são obrigatórias." });
+  }
+
+  try {
+    const profissional = await Profissional.findByPk(profissionalId);
+
+    if (!profissional) {
+      return res.status(404).json({ message: "Profissional não encontrado." });
+    }
+
+    // Verifica se a senha atual está correta
+    const isPasswordValid = await bcrypt.compare(currentPassword, profissional.senha);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Senha atual incorreta." });
+    }
+
+    // Atualiza a senha (o hook no modelo Profissional irá criptografar a nova senha)
+    profissional.senha = newPassword;
+    await profissional.save();
+
+    return res.status(200).json({ message: "Senha atualizada com sucesso." });
+  } catch (error) {
+    console.error("Erro ao alterar senha do profissional:", error);
+    return res.status(500).json({
+      message: "Erro interno ao alterar a senha.",
+      details: (error as Error).message,
+    });
   }
 };

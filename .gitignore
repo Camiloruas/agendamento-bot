@@ -11,7 +11,10 @@ node_modules
 # Documentation (não versionar)
 all_src_code.txt
 ROUTES_FOR_TESTING.md
-DEVELOPMENT_LOG.md
+
+NEW_FEATURES.md
+SaaS-Model.md
+code-logic.md
 
 # WhatsApp Web.js cache
 .wwebjs_auth/

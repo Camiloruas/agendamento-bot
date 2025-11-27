@@ -34,11 +34,11 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Login Profissional</h2>
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="email">Email:</label>
+    <div style={styles.container}>
+      <h2 style={styles.title}>Login Profissional</h2>
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <div style={styles.formGroup}>
+          <label htmlFor="email" style={styles.label}>Email:</label>
           <input
             type="email"
             id="email"
@@ -46,10 +46,11 @@ const Login: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             disabled={loading} // Desabilita o input durante o loading
+            style={styles.input}
           />
         </div>
-        <div className="form-group">
-          <label htmlFor="password">Senha:</label>
+        <div style={styles.formGroup}>
+          <label htmlFor="password" style={styles.label}>Senha:</label>
           <input
             type="password"
             id="password"
@@ -57,21 +58,89 @@ const Login: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             disabled={loading} // Desabilita o input durante o loading
+            style={styles.input}
           />
         </div>
-        {error && <p className="error-message">{error}</p>}
-        <button type="submit" disabled={loading}>
+        {error && <p style={styles.errorMessage}>{error}</p>}
+        <button type="submit" disabled={loading} style={styles.button}>
           {loading ? 'Entrando...' : 'Entrar'} {/* Muda o texto do botão durante o loading */}
         </button>
       </form>
-      <p>
-        Não tem uma conta? <a href="/register">Crie sua conta</a>
+      <p style={styles.linkText}>
+        Não tem uma conta? <a href="/register" style={styles.link}>Crie sua conta</a>
       </p>
-      <p>
-        Esqueceu sua senha? <a href="/forgot-password">Recuperar senha</a>
+      <p style={styles.linkText}>
+        Esqueceu sua senha? <a href="/forgot-password" style={styles.link}>Recuperar senha</a>
       </p>
     </div>
   );
+};
+
+const styles = {
+  container: {
+    display: 'flex',
+    flexDirection: 'column' as 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    backgroundColor: '#f0f2f5',
+    padding: '20px',
+    fontFamily: 'Arial, sans-serif',
+  },
+  title: {
+    color: '#333',
+    marginBottom: '30px',
+  },
+  form: {
+    backgroundColor: '#fff',
+    padding: '40px',
+    borderRadius: '8px',
+    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    width: '100%',
+    maxWidth: '400px',
+    display: 'flex',
+    flexDirection: 'column' as 'column',
+  },
+  formGroup: {
+    marginBottom: '20px',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '8px',
+    color: '#555',
+    fontWeight: 'bold',
+  },
+  input: {
+    width: 'calc(100% - 22px)', // Adjusted for padding and border
+    padding: '10px',
+    border: '1px solid #ddd',
+    borderRadius: '4px',
+    fontSize: '16px',
+  },
+  button: {
+    backgroundColor: '#007bff',
+    color: '#fff',
+    padding: '12px 20px',
+    border: 'none',
+    borderRadius: '4px',
+    fontSize: '18px',
+    cursor: 'pointer',
+    marginTop: '20px',
+    transition: 'background-color 0.3s ease',
+  },
+  errorMessage: {
+    color: '#dc3545',
+    marginTop: '10px',
+    textAlign: 'center' as 'center',
+  },
+  linkText: {
+    marginTop: '15px',
+    color: '#555',
+  },
+  link: {
+    color: '#007bff',
+    textDecoration: 'none',
+  },
 };
 
 export default Login;

@@ -7,6 +7,19 @@ import { HorarioProfissionalAttributes } from '../models/HorarioProfissional';
 import moment from 'moment-timezone'; 
 
 /**
+ * Mapeia os nomes dos dias da semana (strings) para seus respectivos números (0=Domingo, 1=Segunda, etc.).
+ */
+const diaDaSemanaMap: { [key: string]: number } = {
+    'Domingo': 0,
+    'Segunda-feira': 1,
+    'Terça-feira': 2,
+    'Quarta-feira': 3,
+    'Quinta-feira': 4,
+    'Sexta-feira': 5,
+    'Sábado': 6,
+};
+
+/**
  * @function getHorarios
  * @description Retorna a configuração de horários de trabalho (semanal) do profissional autenticado.
  * @param req Objeto de requisição do Express, autenticado.
@@ -36,35 +49,51 @@ export const getHorarios = async (req: AuthRequest, res: Response): Promise<Resp
 /**
  * @function createOrUpdateHorarios
  * @description Permite que um profissional crie ou atualize sua grade de horários de trabalho.
- * Utiliza `upsert` para simplificar a lógica: insere se não existe, atualiza se já existe.
- * @param req Objeto de requisição do Express, autenticado. O corpo deve conter um array de configurações de horário.
+ * Agora, espera um objeto com os dias de trabalho selecionados e os horários comuns.
+ * @param req Objeto de requisição do Express, autenticado. O corpo deve conter os dados do onboarding.
  * @param res Objeto de resposta do Express.
  * @returns Confirmação de sucesso e os dados atualizados.
  */
 export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): Promise<Response> => {
     const profissionalId = req.userId;
-    const horarios: HorarioProfissionalAttributes[] = req.body;
+    const { diasTrabalho, horarioAbertura, horarioFechamento, intervaloInicio, intervaloFim } = req.body;
 
     if (!profissionalId) {
         return res.status(401).json({ message: "Profissional não autenticado." });
     }
 
-    if (!Array.isArray(horarios) || horarios.length === 0) {
-        return res.status(400).json({ message: "O corpo da requisição deve ser um array de horários." });
+    if (!Array.isArray(diasTrabalho) || !horarioAbertura || !horarioFechamento) {
+        return res.status(400).json({ message: "Dados de horário inválidos. Campos obrigatórios faltando." });
     }
 
     try {
-        const resultados = [];
-        for (const horario of horarios) {
-            if (horario.diaDaSemana === undefined || horario.ativo === undefined || !horario.horarioInicio || !horario.horarioFim) {
-                return res.status(400).json({ message: `Horário inválido para o dia ${horario.diaDaSemana}. Campos obrigatórios faltando.` });
-            }
+        // Primeiro, desativa todos os horários existentes para o profissional.
+        await HorarioProfissional.update(
+            { ativo: false },
+            { where: { profissionalId: profissionalId } }
+        );
 
-            // `upsert` é ideal aqui para evitar a necessidade de verificar manualmente se o registro já existe.
-            const [resultado, criado] = await HorarioProfissional.upsert({
-                ...horario,
-                profissionalId: profissionalId,
-            });
+        const horariosParaAtualizar: HorarioProfissionalAttributes[] = [];
+        for (const diaNome of diasTrabalho) {
+            const diaNumero = diaDaSemanaMap[diaNome];
+            if (diaNumero !== undefined) {
+                horariosParaAtualizar.push({
+                    id: '', // Será gerado pelo banco ou atualizado pelo upsert
+                    profissionalId: profissionalId,
+                    diaDaSemana: diaNumero,
+                    ativo: true,
+                    horarioInicio: horarioAbertura,
+                    horarioFim: horarioFechamento,
+                    almocoInicio: intervaloInicio || null,
+                    almocoFim: intervaloFim || null,
+                });
+            }
+        }
+
+        const resultados = [];
+        for (const horario of horariosParaAtualizar) {
+            // `upsert` vai inserir um novo registro ou atualizar um existente baseado em `profissionalId` e `diaDaSemana`.
+            const [resultado] = await HorarioProfissional.upsert(horario);
             resultados.push(resultado);
         }
 

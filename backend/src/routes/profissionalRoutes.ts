@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { createProfissional, loginProfissional, getAllProfissionais, getProfissionalProfile } from "../controllers/profissionalController";
+import { 
+    createProfissional, 
+    loginProfissional, 
+    getAllProfissionais, 
+    getProfissionalProfile,
+    updateProfissionalProfile, // Importar a nova função
+    changeProfissionalPassword, // Importar a nova função
+} from "../controllers/profissionalController";
 import { protect } from "../middlewares/authMiddleware"; 
 
 const router = Router();
@@ -19,7 +26,12 @@ router.post('/login', loginProfissional);
 // Rota protegida para listar todos os profissionais. Acessível apenas por usuários autenticados.
 router.get('/', protect, getAllProfissionais); 
 
-// Rota protegida para que um profissional autenticado possa obter seus próprios dados de perfil.
-router.get('/profile', protect, getProfissionalProfile);
+// Rotas protegidas para gerenciar o perfil do profissional autenticado.
+router.route('/profile')
+    .get(protect, getProfissionalProfile)
+    .put(protect, updateProfissionalProfile); // Rota para atualizar o perfil
+
+// Rota protegida para alterar a senha do profissional autenticado.
+router.put('/password', protect, changeProfissionalPassword);
 
 export default router;

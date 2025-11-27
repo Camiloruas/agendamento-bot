@@ -709,7 +709,6 @@ console.error("Erro ao verificar agendamento ativo:", error);
 return res.status(500).json({ message: "Erro interno ao verificar agendamento ativo." });
 }
 };
-```
 ## `backend/src/controllers/clienteController.ts`
 ```typescript
 import { Request, Response } from 'express';
