@@ -5,6 +5,7 @@ import { DatabaseError } from "sequelize";
 import * as bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { AuthRequest } from "../middlewares/authMiddleware";
+import { getClienteByTelefone } from "./clienteController";
 
 /**
  * @function createProfissional
@@ -15,11 +16,11 @@ import { AuthRequest } from "../middlewares/authMiddleware";
  * @returns Retorna o objeto do profissional criado (sem a senha).
  */
 export const createProfissional = async (req: Request, res: Response): Promise<Response> => {
-  const { nome, email, senha } = req.body;
+  const { nome, email, senha, telefone } = req.body;
 
-  if (!nome || !email || !senha) {
+  if (!nome || !email || !senha || !telefone) {
     return res.status(400).json({
-      message: "Erro: Nome, email e senha são obrigatórios.",
+      message: "Erro: Nome, email, telefone e senha são obrigatórios.",
     });
   }
 
@@ -28,13 +29,15 @@ export const createProfissional = async (req: Request, res: Response): Promise<R
       nome,
       email,
       senha,
-    })) as ProfissionalInstance;
+      telefone,
+    })) as Profissional;
 
     // A resposta omite a senha para seguir as melhores práticas de segurança.
     const profissionalResponse = {
       id: novoProfissional.id,
       nome: novoProfissional.nome,
       email: novoProfissional.email,
+      telefone: novoProfissional.telefone,
       createdAt: novoProfissional.createdAt,
       updatedAt: novoProfissional.updatedAt,
     };
@@ -46,7 +49,7 @@ export const createProfissional = async (req: Request, res: Response): Promise<R
     // Trata especificamente o erro de violação de constraint de unicidade (email duplicado).
     if (dbError.name === "SequelizeUniqueConstraintError") {
       return res.status(409).json({
-        message: "Erro: O email fornecido já está em uso.",
+        message: "Erro: O email OU telefone fornecido já está em uso.",
         details: dbError.message,
       });
     }
@@ -85,7 +88,7 @@ export const loginProfissional = async (req: Request, res: Response): Promise<Re
       });
     }
 
-    const profInstance = profissional as ProfissionalInstance;
+    const profInstance = profissional as Profissional;
     // Compara a senha fornecida com o hash armazenado no banco de dados.
     const isPasswordValid = await bcrypt.compare(senha, profInstance.senha);
 
@@ -117,6 +120,7 @@ export const loginProfissional = async (req: Request, res: Response): Promise<Re
         id: profInstance.id,
         nome: profInstance.nome,
         email: profInstance.email,
+        telefone: profInstance.telefone,
       },
     });
   } catch (error) {
@@ -137,7 +141,7 @@ export const loginProfissional = async (req: Request, res: Response): Promise<Re
 export const getAllProfissionais = async (req: Request, res: Response): Promise<Response> => {
   try {
     const profissionais = await Profissional.findAll({
-      attributes: ["id", "nome", "email", "createdAt", "updatedAt"],
+      attributes: ["id", "nome", "email", "telefone", "createdAt", "updatedAt"],
     });
 
     return res.status(200).json(profissionais);
@@ -157,21 +161,21 @@ export const getAllProfissionais = async (req: Request, res: Response): Promise<
  * @returns O perfil do profissional (sem a senha).
  */
 export const getProfissionalProfile = async (req: Request, res: Response): Promise<Response> => {
-    const authReq = req as AuthRequest;
-    const profissionalId = authReq.userId;
+  const authReq = req as AuthRequest;
+  const profissionalId = authReq.userId;
 
-    try {
-        const profissional = await Profissional.findByPk(profissionalId, {
-            attributes: { exclude: ['senha'] } 
-        });
+  try {
+    const profissional = await Profissional.findByPk(profissionalId, {
+      attributes: { exclude: ["senha"] },
+    });
 
-        if (!profissional) {
-            return res.status(404).json({ message: "Perfil do profissional não encontrado." });
-        }
-
-        return res.status(200).json(profissional);
-    } catch (error) {
-        console.error("Erro ao buscar perfil do profissional:", error);
-        return res.status(500).json({ message: "Erro interno ao buscar o perfil." });
+    if (!profissional) {
+      return res.status(404).json({ message: "Perfil do profissional não encontrado." });
     }
+
+    return res.status(200).json(profissional);
+  } catch (error) {
+    console.error("Erro ao buscar perfil do profissional:", error);
+    return res.status(500).json({ message: "Erro interno ao buscar o perfil." });
+  }
 };
