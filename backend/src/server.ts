@@ -6,14 +6,16 @@ import cors from "cors";
 import profissionalRoutes from "./routes/profissionalRoutes";
 import agendamentoRoutes from "./routes/agendamentoRoutes";
 import clienteRoutes from "./routes/clienteRoutes";
-import horarioRoutes from "./routes/horarioRoutes"; 
+import horarioRoutes from "./routes/horarioRoutes";
+import servicoRoutes from "./routes/servicoRoutes";
 import sequelize, { testConnection } from "./database/connection";
 
 // Importa os modelos para que possam ser inicializados e associados dinamicamente.
 import Profissional from "./models/Profissional";
 import Agendamento from "./models/Agendamento";
 import Cliente from "./models/Cliente";
-import HorarioProfissional from "./models/HorarioProfissional"; 
+import HorarioProfissional from "./models/HorarioProfissional";
+import Servico from "./models/Servico";
 
 /**
  * @interface ISequelizeModel
@@ -21,8 +23,8 @@ import HorarioProfissional from "./models/HorarioProfissional";
  * Isso permite um tratamento polimórfico dos modelos durante a inicialização.
  */
 interface ISequelizeModel {
-    initialize: (sequelize: any) => void;
-    associate?: (models: any) => void; 
+  initialize: (sequelize: any) => void;
+  associate?: (models: any) => void;
 }
 
 const PORT: number = parseInt(process.env.APP_PORT || "3001", 10);
@@ -39,6 +41,7 @@ app.use("/api/profissionais", profissionalRoutes);
 app.use("/api/agendamentos", agendamentoRoutes);
 app.use("/api/clientes", clienteRoutes);
 app.use("/api/horarios", horarioRoutes);
+app.use("/api/servicos", servicoRoutes);
 
 // Uma rota raiz de diagnóstico para verificar se o servidor está online.
 app.get("/", (req: Request, res: Response) => {
@@ -54,7 +57,7 @@ app.get("/", (req: Request, res: Response) => {
  */
 async function startServer() {
   // Um registro central de todos os modelos da aplicação para facilitar a inicialização.
-  const models = { Profissional, Cliente, Agendamento, HorarioProfissional };
+  const models = { Profissional, Cliente, Agendamento, HorarioProfissional, Servico };
 
   // Itera sobre todos os modelos para inicializá-los com a instância do Sequelize.
   // Isso os "conecta" ao banco de dados.
@@ -66,7 +69,7 @@ async function startServer() {
   // A separação garante que todos os modelos existam antes de tentar criar relações.
   for (const model of Object.values(models)) {
     if (typeof model.associate === "function") {
-      model.associate(models); 
+      model.associate(models);
     }
   }
 
@@ -76,7 +79,7 @@ async function startServer() {
   // Sincroniza os modelos com o banco de dados.
   // `alter: true` modifica as tabelas para corresponderem aos modelos sem apagar dados existentes.
   // Ideal para desenvolvimento, mas para produção, migrações (`migrations`) são mais seguras.
-  await sequelize.sync({ alter: true }); 
+  await sequelize.sync();
   console.log("[DB] Banco de dados sincronizado com sucesso!");
 
   // Inicia o servidor Express para escutar na porta configurada.

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import moment from 'moment'; 
+import moment from 'moment';
 
 // Define a URL base para todas as chamadas à API do backend.
 // Usar uma variável de ambiente aqui torna o código portável entre diferentes ambientes (desenvolvimento, produção).
@@ -19,6 +19,11 @@ export class AppointmentConflictError extends Error {
     super(message);
     this.name = 'AppointmentConflictError';
   }
+}
+
+export interface TimeSlot {
+  time: string;
+  status: "disponivel" | "ocupado";
 }
 
 /**
@@ -80,7 +85,7 @@ export const api = {
       } else {
         console.error('[API CLIENT] getClienteByTelefone - Erro desconhecido ao buscar cliente:', error.message);
       }
-      throw error; 
+      throw error;
     }
   },
 
@@ -99,18 +104,18 @@ export const api = {
    */
   async getActiveAppointment(clienteId: number): Promise<any> {
     try {
-        const futureAppointments = await api.getFutureAppointments(clienteId);
-        const now = moment();
-        const activeAppointment = futureAppointments.find(app =>
-            ['Pendente', 'Confirmado'].includes(app.status) && moment(app.dataHora).isSameOrAfter(now)
-        );
-        return activeAppointment || null;
+      const futureAppointments = await api.getFutureAppointments(clienteId);
+      const now = moment();
+      const activeAppointment = futureAppointments.find(app =>
+        ['Pendente', 'Confirmado'].includes(app.status) && moment(app.dataHora).isSameOrAfter(now)
+      );
+      return activeAppointment || null;
     } catch (error: any) {
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-            return null; // Nenhum agendamento futuro encontrado, logo, nenhum ativo.
-        }
-        console.error(`[API CLIENT] getActiveAppointment - Erro ao buscar agendamentos ativos para cliente ${clienteId}:`, error.message);
-        throw error;
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null; // Nenhum agendamento futuro encontrado, logo, nenhum ativo.
+      }
+      console.error(`[API CLIENT] getActiveAppointment - Erro ao buscar agendamentos ativos para cliente ${clienteId}:`, error.message);
+      throw error;
     }
   },
 
@@ -119,7 +124,7 @@ export const api = {
    * @description Busca todos os agendamentos futuros de um cliente.
    */
   async getFutureAppointments(clienteId: number): Promise<any[]> {
-    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}`); 
+    const response = await axios.get(`${API_BASE_URL}/agendamentos/cliente/${clienteId}`);
     return response.data;
   },
 
@@ -145,7 +150,7 @@ export const api = {
    * @method getAvailableSlots
    * @description Busca os horários (slots) disponíveis para uma data específica com o profissional logado.
    */
-  async getAvailableSlots(date: string): Promise<string[]> {
+  async getAvailableSlots(date: string): Promise<TimeSlot[]> {
     if (!this.getProfissionalId()) throw new Error("ID do profissional não definido para buscar horários.");
     const response = await axios.get(`${API_BASE_URL}/horarios/horarios-disponiveis/${this.getProfissionalId()}/${date}`);
     return response.data;
@@ -166,5 +171,14 @@ export const api = {
       }
       throw error;
     }
+  },
+
+  /**
+   * @method getServices
+   * @description Busca a lista de serviços disponíveis no backend.
+   */
+  async getServices(): Promise<any[]> {
+    const response = await axios.get(`${API_BASE_URL}/servicos`);
+    return response.data;
   }
 };

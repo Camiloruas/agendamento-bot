@@ -1,7 +1,7 @@
 import { Client, LocalAuth, Message } from 'whatsapp-web.js';
 import qrcode from 'qrcode-terminal';
-import { handleIncomingMessage } from './botService'; 
-import { api } from './api-client'; 
+import { handleIncomingMessage } from './botService';
+import { api } from './api-client';
 
 /**
  * @file Responsável pela inicialização e gerenciamento do cliente WhatsApp.
@@ -13,6 +13,9 @@ import { api } from './api-client';
 // evitando a necessidade de escanear o QR code a cada reinicialização.
 const client = new Client({
     authStrategy: new LocalAuth({ clientId: 'agendamento_barber_bot' }),
+    puppeteer: {
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    }
 });
 
 console.log('[WHATSAPP] Inicializando cliente...');
@@ -34,7 +37,7 @@ client.on('qr', (qr) => {
  * Neste ponto, o bot realiza o login no backend para obter o token de autenticação
  * necessário para as chamadas de API subsequentes.
  */
-client.on('ready', async () => { 
+client.on('ready', async () => {
     console.log(`\n✅ [WHATSAPP] Cliente conectado e pronto para receber mensagens!`);
     console.log(`🤖 Bot associado ao número: ${client.info.wid.user}`);
 
@@ -51,7 +54,7 @@ client.on('ready', async () => {
 client.on('disconnected', (reason) => {
     console.error(`\n❌ [WHATSAPP] Cliente desconectado. Motivo: ${reason}`);
     // Tenta reiniciar o cliente após um breve intervalo para se recuperar de falhas de rede.
-    setTimeout(() => client.initialize(), 5000); 
+    setTimeout(() => client.initialize(), 5000);
 });
 
 /**
@@ -75,7 +78,7 @@ client.on('message_create', async (msg: Message) => {
     if (msg.isStatus || msg.fromMe) return;
 
     // Normaliza o número de telefone para servir como um ID único para a conversa.
-    const telefone = msg.from.replace('@c.us', '').replace('@g.us', ''); 
+    const telefone = msg.from.replace('@c.us', '').replace('@g.us', '');
     const mensagem = msg.body;
 
     // Ignora mensagens que não contêm texto (ex: apenas mídia).

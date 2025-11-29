@@ -19,3 +19,5 @@ code-logic.md
 # WhatsApp Web.js cache
 .wwebjs_auth/
 .wwebjs_cache/
+.wwebjs_auth_new
+.wwebjs_auth_v3
