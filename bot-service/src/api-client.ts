@@ -175,10 +175,10 @@ export const api = {
 
   /**
    * @method getServices
-   * @description Busca a lista de serviços disponíveis no backend.
+   * @description Busca todos os serviços ativos disponíveis.
    */
   async getServices(): Promise<any[]> {
-    const response = await axios.get(`${API_BASE_URL}/servicos`);
+    const response = await axios.get(`${API_BASE_URL}/servicos?ativo=true`);
     return response.data;
   }
 };

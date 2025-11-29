@@ -6,6 +6,7 @@ export interface ServicoAttributes {
     descricao: string | null;
     preco: number;
     duracao: number; // em minutos
+    ativo: boolean; // Controla se o serviço aparece no bot
 }
 
 export interface ServicoCreationAttributes extends Optional<ServicoAttributes, "id" | "descricao"> { }
@@ -16,6 +17,7 @@ export class Servico extends Model<ServicoAttributes, ServicoCreationAttributes>
     declare descricao: string | null;
     declare preco: number;
     declare duracao: number;
+    declare ativo: boolean;
 
     declare readonly createdAt: Date;
     declare readonly updatedAt: Date;
@@ -45,6 +47,12 @@ export class Servico extends Model<ServicoAttributes, ServicoCreationAttributes>
                     type: DataTypes.INTEGER,
                     allowNull: false,
                     comment: "Duração em minutos",
+                },
+                ativo: {
+                    type: DataTypes.BOOLEAN,
+                    allowNull: false,
+                    defaultValue: true,
+                    comment: "Define se o serviço está ativo e visível no bot",
                 },
             },
             {
