@@ -68,6 +68,20 @@ const Dashboard = () => {
   const [servicosLoading, setServicosLoading] = useState(false);
   const [servicosError, setServicosError] = useState('');
 
+  // Estados para Gerenciamento de Serviços
+  const [todosServicos, setTodosServicos] = useState<Servico[]>([]);
+  const [servicosGerenciarLoading, setServicosGerenciarLoading] = useState(false);
+  const [servicosGerenciarError, setServicosGerenciarError] = useState('');
+  const [novoServico, setNovoServico] = useState({
+    nome: '',
+    descricao: '',
+    preco: '',
+    duracao: '',
+    ativo: true,
+  });
+  const [servicoEditando, setServicoEditando] = useState<string | null>(null);
+  const [servicoMessage, setServicoMessage] = useState('');
+
   // Estados para a seção de Configurações da Conta
   const [profileData, setProfileData] = useState<ProfissionalProfile | null>(null);
   const [profileEditData, setProfileEditData] = useState({ nome: '', email: '', telefone: '' });
