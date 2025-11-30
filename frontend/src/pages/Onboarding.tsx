@@ -49,7 +49,7 @@ const Onboarding = () => {
             .map(h => diaDaSemanaMapReverse[h.diaDaSemana]);
 
           const sampleHorario = existingHorarios.find(h => h.ativo); // Pega qualquer horário ativo para preencher os tempos
-          
+
           setOnboardingData({
             diasTrabalho: activeDays,
             horarioAbertura: sampleHorario?.horarioInicio || '',
@@ -78,16 +78,19 @@ const Onboarding = () => {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value, type, checked } = e.target;
+    const target = e.target as HTMLInputElement;
+    const { name, value, type, checked } = target;
 
     if (type === 'checkbox') {
-      const updatedDias = checked
-        ? [...onboardingData.diasTrabalho, value]
-        : onboardingData.diasTrabalho.filter((day) => day !== value);
-      setOnboardingData((prevData) => ({
-        ...prevData,
-        diasTrabalho: updatedDias,
-      }));
+      setOnboardingData((prevData) => {
+        const updatedDias = checked
+          ? [...prevData.diasTrabalho, value]
+          : prevData.diasTrabalho.filter((day) => day !== value);
+        return {
+          ...prevData,
+          diasTrabalho: updatedDias,
+        };
+      });
     } else {
       setOnboardingData((prevData) => ({
         ...prevData,
@@ -231,7 +234,7 @@ const Onboarding = () => {
         return (
           <div style={styles.stepContainer}>
             <h2 style={styles.stepTitle}>Passo 4: Serviços</h2>
-            <p style={styles.stepDescription}>Aqui você poderá configurar seus serviços. <br/> Por enquanto, esta seção é um placeholder.</p>
+            <p style={styles.stepDescription}>Aqui você poderá configurar seus serviços. <br /> Por enquanto, esta seção é um placeholder.</p>
             {/* Implementação futura para serviços customizáveis */}
             <div style={styles.navigationButtons}>
               <button onClick={handlePreviousStep} style={styles.buttonSecondary} disabled={loading}>Anterior</button>

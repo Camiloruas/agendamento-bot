@@ -1,4 +1,4 @@
-import { api, AppointmentConflictError } from "./api-client";
+import { api, AppointmentConflictError, TimeSlot } from "./api-client";
 import moment from "moment";
 
 /**
@@ -25,11 +25,7 @@ export enum BotState {
   CONFIRMATION,
 }
 
-// Define a estrutura de um slot de horário, incluindo seu status de disponibilidade.
-interface TimeSlot {
-  time: string;
-  status: "disponivel" | "ocupado";
-}
+
 
 /**
  * @interface Conversation
@@ -52,11 +48,25 @@ export interface Conversation {
 
 // Constantes que ajudam a padronizar e formatar as respostas do bot.
 export const DIAS_SEMANA = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
-export const SERVICES = [
-  { id: 1, servico_tag: "corte" },
-  { id: 2, servico_tag: "barba" },
-  { id: 3, servico_tag: "corte_barba" },
-];
+
+
+// Função auxiliar para buscar serviços e formatar o menu
+async function getServicesMenu(): Promise<string> {
+  try {
+    const services = await api.getServices();
+    if (services.length === 0) return "Nenhum serviço disponível no momento.";
+
+    let msg = "Qual serviço deseja realizar? Digite o número:\n";
+    services.forEach((s: any, index: number) => {
+      msg += `${index + 1}) ${s.nome} - R$ ${s.preco}\n`;
+    });
+    msg += "0) Cancelar";
+    return msg;
+  } catch (error) {
+    console.error("Erro ao buscar serviços:", error);
+    return "Erro ao carregar serviços. Tente novamente mais tarde.";
+  }
+}
 
 /**
  * @function handleStart
@@ -121,11 +131,7 @@ async function handleMainMenu(conv: Conversation, input: string): Promise<string
   if (selection === 1) {
     // Novo Agendamento
     conv.state = BotState.AWAITING_SERVICE_SELECTION;
-    return `Qual serviço deseja realizar? Digite o número:
-1) Corte
-2) Barba
-3) Corte + Barba
-0) Cancelar`;
+    return await getServicesMenu();
   } else if (selection === 2) {
     // Ver Agendamentos
     const appointments = await api.getFutureAppointments(conv.clienteId!);
@@ -176,13 +182,10 @@ async function handleRegistration(conv: Conversation, input: string): Promise<st
     conv.clienteNome = result.cliente.nome;
 
     conv.state = BotState.AWAITING_SERVICE_SELECTION; // Avança para o agendamento
+    const servicesMenu = await getServicesMenu();
     return `✅ Ótimo, ${conv.clienteNome}! Seu cadastrado foi realizado com sucesso. Agora, vamos agendar.
 
-Qual serviço deseja realizar? Digite o número:
-1) Corte
-2) Barba
-3) Corte + Barba
-0) Cancelar`;
+${servicesMenu}`;
   } catch (error: any) {
     console.error(`Erro ao criar cliente para ${conv.telefone}:`, error.response?.data || error.message);
     // Trata o caso de o cliente já existir no banco de dados (conflito 409).
@@ -196,9 +199,8 @@ Qual serviço deseja realizar? Digite o número:
         conv.clienteId = clienteData.id;
         conv.clienteNome = clienteData.nome;
       }
-      return `Parece que você já está cadastrado, ${
-        conv.clienteNome || "caro cliente"
-      }! Redirecionando para o menu principal. Como posso ajudar hoje? Digite o número da opção:
+      return `Parece que você já está cadastrado, ${conv.clienteNome || "caro cliente"
+        }! Redirecionando para o menu principal. Como posso ajudar hoje? Digite o número da opção:
 1) Fazer um Novo Agendamento
 2) Ver Agendamentos Futuros (Consulta)
 0) Encerrar`;
@@ -224,11 +226,9 @@ async function handleExistingAppointmentMenu(conv: Conversation, input: string):
     await api.cancelAgendamento(conv.activeAppointment.id);
     conv.activeAppointment = null;
     conv.state = BotState.AWAITING_SERVICE_SELECTION;
+    const servicesMenu = await getServicesMenu();
     return `Entendido. Agendamento anterior cancelado. Por favor, escolha o serviço para remarcar:
-1) Corte
-2) Barba
-3) Corte + Barba
-0) Cancelar`;
+${servicesMenu}`;
   } else if (selection === 3) {
     // Cancelar
     await api.cancelAgendamento(conv.activeAppointment.id);
@@ -240,12 +240,9 @@ async function handleExistingAppointmentMenu(conv: Conversation, input: string):
   } else if (selection === 4) {
     // Novo agendamento (mantendo o antigo)
     conv.state = BotState.AWAITING_SERVICE_SELECTION;
+    const servicesMenu = await getServicesMenu();
     return `Certo, vamos para um novo agendamento.
-Qual serviço deseja realizar? Digite o número:
-1) Corte
-2) Barba
-3) Corte + Barba
-0) Cancelar`;
+${servicesMenu}`;
   } else {
     return "Opção inválida. Escolha entre 1, 2, 3 ou 4.";
   }
@@ -257,15 +254,19 @@ Qual serviço deseja realizar? Digite o número:
  */
 async function handleServiceSelection(conv: Conversation, input: string): Promise<string> {
   const selection = parseInt(input);
-  const selectedService = SERVICES.find((s) => s.id === selection);
 
   if (selection === 0) return await showMainMenu(conv);
-  if (!selectedService) return "Serviço inválido. Por favor, escolha uma das opções (1, 2 ou 3).";
 
-  conv.selectedService = selectedService.servico_tag;
+  const services = await api.getServices();
+  if (isNaN(selection) || selection < 1 || selection > services.length) {
+    return "Serviço inválido. Por favor, escolha uma das opções.";
+  }
+
+  const selectedService = services[selection - 1];
+  conv.selectedService = selectedService.nome;
 
   const activeDates = await api.getAvailableDates();
-  conv.availableDates = activeDates.map((date: string) => date.split("T")[0]).slice(0, 8); // Pega apenas os 8 primeiros dias
+  conv.availableDates = activeDates.map((date: string) => date.split("T")[0] as string).slice(0, 8); // Pega apenas os 8 primeiros dias
 
   if (conv.availableDates.length === 0) {
     return `Desculpe, não temos dias disponíveis no momento. ${await showMainMenu(conv)}`;
@@ -297,7 +298,7 @@ async function handleDaySelection(conv: Conversation, input: string): Promise<st
     return `Dia inválido. Por favor, escolha um número de 1 a ${conv.availableDates.length}.`;
   }
 
-  const selectedDate = conv.availableDates[selection - 1];
+  const selectedDate = conv.availableDates[selection - 1]!;
   conv.selectedDate = selectedDate;
 
   const slots = await api.getAvailableSlots(selectedDate);
@@ -335,7 +336,7 @@ async function handleTimeSelection(conv: Conversation, input: string): Promise<s
     return `Horário inválido. Por favor, escolha um número de 1 a ${conv.availableTimes.length}.`;
   }
 
-  const selectedSlot = conv.availableTimes[selection - 1];
+  const selectedSlot = conv.availableTimes[selection - 1]!;
 
   // Regra de negócio importante: não permitir a seleção de um slot ocupado.
   if (selectedSlot.status === "ocupado") {

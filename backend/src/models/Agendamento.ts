@@ -13,7 +13,7 @@ export interface AgendamentoAttributes {
   descricao: string | null;
   profissionalId: string;
   clienteId: string;
-  servico: 'Corte' | 'Barba' | 'Corte + Barba';
+  servico: string;
   status: 'Pendente' | 'Confirmado' | 'Cancelado';
 }
 
@@ -22,7 +22,7 @@ export interface AgendamentoAttributes {
  * @description Define quais atributos são opcionais ao criar um novo agendamento.
  * `id` é gerado automaticamente pelo banco de dados, e `descricao` e `status` têm valores padrão.
  */
-export interface AgendamentoCreationAttributes extends Optional<AgendamentoAttributes, "id" | "descricao" | "status"> {}
+export interface AgendamentoCreationAttributes extends Optional<AgendamentoAttributes, "id" | "descricao" | "status"> { }
 
 /**
  * @class Agendamento
@@ -36,7 +36,7 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
   declare descricao: string | null;
   declare profissionalId: string;
   declare clienteId: string;
-  declare servico: 'Corte' | 'Barba' | 'Corte + Barba';
+  declare servico: string;
   declare status: 'Pendente' | 'Confirmado' | 'Cancelado';
 
   declare readonly createdAt: Date;
@@ -80,13 +80,13 @@ export class Agendamento extends Model<AgendamentoAttributes, AgendamentoCreatio
           allowNull: false,
         },
         servico: {
-            type: DataTypes.ENUM('Corte', 'Barba', 'Corte + Barba'),
-            allowNull: false,
+          type: DataTypes.STRING,
+          allowNull: false,
         },
         status: {
-            type: DataTypes.ENUM('Pendente', 'Confirmado', 'Cancelado'),
-            defaultValue: 'Pendente',
-            allowNull: false,
+          type: DataTypes.ENUM('Pendente', 'Confirmado', 'Cancelado'),
+          defaultValue: 'Pendente',
+          allowNull: false,
         },
       },
       {

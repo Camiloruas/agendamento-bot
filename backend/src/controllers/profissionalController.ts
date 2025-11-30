@@ -292,3 +292,40 @@ export const changeProfissionalPassword = async (req: AuthRequest, res: Response
     });
   }
 };
+
+/**
+ * @function deleteProfissional
+ * @description Deleta um profissional do sistema pelo ID.
+ * Esta é uma operação sensível que deve ser usada com cuidado.
+ * @param req Objeto de requisição do Express com o ID do profissional nos parâmetros.
+ * @param res Objeto de resposta do Express.
+ * @returns Uma mensagem de sucesso ou erro.
+ */
+export const deleteProfissional = async (req: Request, res: Response): Promise<Response> => {
+  const { id } = req.params;
+
+  if (!id) {
+    return res.status(400).json({ message: "ID do profissional é obrigatório." });
+  }
+
+  try {
+    const profissional = await Profissional.findByPk(id);
+
+    if (!profissional) {
+      return res.status(404).json({ message: "Profissional não encontrado." });
+    }
+
+    await profissional.destroy();
+
+    return res.status(200).json({
+      message: "Profissional deletado com sucesso.",
+      id: id
+    });
+  } catch (error) {
+    console.error("Erro ao deletar profissional:", error);
+    return res.status(500).json({
+      message: "Erro interno ao deletar o profissional.",
+      details: (error as Error).message,
+    });
+  }
+};

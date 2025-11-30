@@ -1,13 +1,14 @@
 import { Router } from "express";
-import { 
-    createProfissional, 
-    loginProfissional, 
-    getAllProfissionais, 
+import {
+    createProfissional,
+    loginProfissional,
+    getAllProfissionais,
     getProfissionalProfile,
-    updateProfissionalProfile, // Importar a nova função
-    changeProfissionalPassword, // Importar a nova função
+    updateProfissionalProfile,
+    changeProfissionalPassword,
+    deleteProfissional, // Novo import
 } from "../controllers/profissionalController";
-import { protect } from "../middlewares/authMiddleware"; 
+import { protect } from "../middlewares/authMiddleware";
 
 const router = Router();
 
@@ -24,14 +25,17 @@ router.post('/register', createProfissional);
 router.post('/login', loginProfissional);
 
 // Rota protegida para listar todos os profissionais. Acessível apenas por usuários autenticados.
-router.get('/', protect, getAllProfissionais); 
+router.get('/', protect, getAllProfissionais);
 
 // Rotas protegidas para gerenciar o perfil do profissional autenticado.
 router.route('/profile')
     .get(protect, getProfissionalProfile)
-    .put(protect, updateProfissionalProfile); // Rota para atualizar o perfil
+    .put(protect, updateProfissionalProfile);
 
 // Rota protegida para alterar a senha do profissional autenticado.
 router.put('/password', protect, changeProfissionalPassword);
+
+// Rota protegida para deletar um profissional por ID.
+router.delete('/:id', protect, deleteProfissional);
 
 export default router;

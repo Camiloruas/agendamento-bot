@@ -4,7 +4,7 @@ import { AuthRequest } from '../middlewares/authMiddleware';
 import HorarioProfissional from '../models/HorarioProfissional';
 import Agendamento from '../models/Agendamento';
 import { HorarioProfissionalAttributes } from '../models/HorarioProfissional';
-import moment from 'moment-timezone'; 
+import moment from 'moment-timezone';
 
 /**
  * Mapeia os nomes dos dias da semana (strings) para seus respectivos números (0=Domingo, 1=Segunda, etc.).
@@ -78,7 +78,6 @@ export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): P
             const diaNumero = diaDaSemanaMap[diaNome];
             if (diaNumero !== undefined) {
                 horariosParaAtualizar.push({
-                    id: '', // Será gerado pelo banco ou atualizado pelo upsert
                     profissionalId: profissionalId,
                     diaDaSemana: diaNumero,
                     ativo: true,
@@ -86,7 +85,7 @@ export const createOrUpdateHorarios = async (req: AuthRequest, res: Response): P
                     horarioFim: horarioFechamento,
                     almocoInicio: intervaloInicio || null,
                     almocoFim: intervaloFim || null,
-                });
+                } as any);
             }
         }
 
@@ -176,15 +175,15 @@ export const getHorariosDisponiveis = async (req: Request, res: Response): Promi
     const TIMEZONE = 'America/Sao_Paulo'; // É crucial definir um fuso horário para consistência.
 
     try {
-        const selectedDate = moment.utc(date as string); 
-        const dayOfWeek = selectedDate.day(); 
+        const selectedDate = moment.utc(date as string);
+        const dayOfWeek = selectedDate.day();
 
         const horarioConfig = await HorarioProfissional.findOne({
             where: { profissionalId, diaDaSemana: dayOfWeek, ativo: true },
         });
 
         if (!horarioConfig) {
-            return res.status(200).json([]); 
+            return res.status(200).json([]);
         }
 
         // Busca agendamentos existentes no fuso horário local do profissional para evitar erros de um dia para o outro.
@@ -198,7 +197,7 @@ export const getHorariosDisponiveis = async (req: Request, res: Response): Promi
                     [Op.between]: [startOfDayInTimezone.clone().utc().toDate(), endOfDayInTimezone.clone().utc().toDate()],
                 },
                 status: {
-                    [Op.ne]: 'Cancelado', 
+                    [Op.ne]: 'Cancelado',
                 },
             },
             attributes: ['dataHora'],
@@ -208,7 +207,7 @@ export const getHorariosDisponiveis = async (req: Request, res: Response): Promi
 
         // Gera todos os slots de horário possíveis para o dia.
         const allSlots: { time: string, status: 'disponivel' | 'ocupado' }[] = [];
-        
+
         const currentTime = moment.tz(`${date} ${horarioConfig.horarioInicio}`, 'YYYY-MM-DD HH:mm', TIMEZONE);
         const endTime = moment.tz(`${date} ${horarioConfig.horarioFim}`, 'YYYY-MM-DD HH:mm', TIMEZONE);
         const lunchStart = horarioConfig.almocoInicio ? moment.tz(`${date} ${horarioConfig.almocoInicio}`, 'YYYY-MM-DD HH:mm', TIMEZONE) : null;
@@ -218,15 +217,15 @@ export const getHorariosDisponiveis = async (req: Request, res: Response): Promi
         while (currentTime.isBefore(endTime)) {
             // Verifica e pula o horário de almoço, se configurado.
             if (lunchStart && lunchEnd && currentTime.isBetween(lunchStart, lunchEnd, null, '[)')) {
-                currentTime.add(1, 'hour'); 
-                continue; 
+                currentTime.add(1, 'hour');
+                continue;
             }
 
-            const slotTime = currentTime.format('HH:mm'); 
+            const slotTime = currentTime.format('HH:mm');
             const status = bookedTimes.has(slotTime) ? 'ocupado' : 'disponivel';
-            
+
             allSlots.push({ time: slotTime, status: status });
-            
+
             currentTime.add(1, 'hour'); // Avança para o próximo slot.
         }
 

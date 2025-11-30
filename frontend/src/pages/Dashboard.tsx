@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import agendamentoService from '../services/agendamentoService';
 import clienteService from '../services/clienteService';
-import profissionalService from '../services/profissionalService'; // Importa o serviço de profissional
+import profissionalService from '../services/profissionalService';
+import servicoService, { type Servico } from '../services/servicoService';
+import GerenciarServicos from '../components/GerenciarServicos';
 
 interface Agendamento {
   id: string;
@@ -40,9 +42,10 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Estados para a seção de Agenda Diária
+
+  // Estados para a seção de Agenda Diária  
   const todayISO = new Date().toISOString().split('T')[0];
-  const [agendaDate, setAgendaDate] = useState<string>(todayISO); // Data selecionada para a agenda
+  const [agendaDate, setAgendaDate] = useState<string>(todayISO);
   const [agendaAgendamentos, setAgendaAgendamentos] = useState<Agendamento[]>([]);
   const [agendaLoading, setAgendaLoading] = useState(false);
   const [agendaError, setAgendaError] = useState('');
@@ -60,6 +63,25 @@ const Dashboard = () => {
   });
   const [newAppointmentLoading, setNewAppointmentLoading] = useState(false);
   const [newAppointmentMessage, setNewAppointmentMessage] = useState('');
+
+  // Estados para Serviços Dinâmicos
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [servicosLoading, setServicosLoading] = useState(false);
+  const [servicosError, setServicosError] = useState('');
+
+  // Estados para Gerenciamento de Serviços
+  const [todosServicos, setTodosServicos] = useState<Servico[]>([]);
+  const [servicosGerenciarLoading, setServicosGerenciarLoading] = useState(false);
+  const [servicosGerenciarError, setServicosGerenciarError] = useState('');
+  const [novoServico, setNovoServico] = useState({
+    nome: '',
+    descricao: '',
+    preco: '',
+    duracao: '',
+    ativo: true,
+  });
+  const [servicoEditando, setServicoEditando] = useState<string | null>(null);
+  const [servicoMessage, setServicoMessage] = useState('');
 
   // Estados para a seção de Configurações da Conta
   const [profileData, setProfileData] = useState<ProfissionalProfile | null>(null);
@@ -135,6 +157,31 @@ const Dashboard = () => {
     };
 
     fetchClientes();
+    fetchClientes();
+  }, [activeSection]);
+
+  // Efeito para buscar serviços quando a seção de cadastro de agendamento manual está ativa
+  useEffect(() => {
+    const fetchServicos = async () => {
+      if (activeSection === 'cadastrarAgendamento') {
+        setServicosLoading(true);
+        setServicosError('');
+        try {
+          const data = await servicoService.getAllServicos();
+          setServicos(data);
+          if (data.length > 0) {
+            // Opcional: selecionar o primeiro serviço por padrão
+            // setNewAppointmentData(prev => ({ ...prev, servico: data[0].nome }));
+          }
+        } catch (err: any) {
+          setServicosError(err.message || 'Erro ao carregar lista de serviços.');
+        } finally {
+          setServicosLoading(false);
+        }
+      }
+    };
+
+    fetchServicos();
   }, [activeSection]);
 
   // Efeito para buscar perfil do profissional quando a seção de Configurações da Conta está ativa
@@ -165,16 +212,53 @@ const Dashboard = () => {
   };
 
   const getTodayAppointments = () => {
-    const today = new Date().toISOString().split('T')[0];
-    return agendamentos.filter(ag => ag.dataHora.startsWith(today));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return agendamentos.filter(ag => {
+      const agDate = new Date(ag.dataHora);
+      agDate.setHours(0, 0, 0, 0);
+      return agDate.getTime() === today.getTime();
+    });
   };
 
   const getNextAppointment = () => {
     const now = new Date();
-    const futureAppointments = agendamentos
-      .filter(ag => new Date(ag.dataHora) > now)
-      .sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
-    return futureAppointments.length > 0 ? futureAppointments[0] : null;
+    const futureAppointments = agendamentos.filter(ag => new Date(ag.dataHora) > now);
+    futureAppointments.sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
+    return futureAppointments[0] || null;
+  };
+
+  // Função para obter agendamentos dos próximos 7 dias
+  const getWeekAppointments = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekLater = new Date(today);
+    weekLater.setDate(weekLater.getDate() + 7);
+
+    return agendamentos.filter(ag => {
+      const agDate = new Date(ag.dataHora);
+      return agDate >= today && agDate < weekLater;
+    });
+  };
+
+  // Função para agrupar agendamentos por dia
+  const groupAppointmentsByDay = (appointments: Agendamento[]) => {
+    const grouped: { [date: string]: Agendamento[] } = {};
+
+    appointments.forEach(ag => {
+      const date = new Date(ag.dataHora).toISOString().split('T')[0];
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(ag);
+    });
+
+    // Ordenar agendamentos dentro de cada dia por horário
+    Object.keys(grouped).forEach(date => {
+      grouped[date].sort((a, b) => new Date(a.dataHora).getTime() - new Date(b.dataHora).getTime());
+    });
+
+    return grouped;
   };
 
   const handleNewAppointmentChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -298,7 +382,7 @@ const Dashboard = () => {
             <p>Total de agendamentos hoje: {todayAppointments.length}</p>
             {todayAppointments.length > 0 && (
               <div>
-                <h3 style={{marginTop: '20px', marginBottom: '10px'}}>Agendamentos de Hoje:</h3>
+                <h3 style={{ marginTop: '20px', marginBottom: '10px' }}>Agendamentos de Hoje:</h3>
                 <ul style={styles.appointmentList}>
                   {todayAppointments.map(ag => (
                     <li key={ag.id} style={styles.appointmentItem}>
@@ -311,33 +395,42 @@ const Dashboard = () => {
           </div>
         );
       case 'agenda':
+        const weekAppointments = getWeekAppointments();
+        const groupedAppointments = groupAppointmentsByDay(weekAppointments);
+        const sortedDates = Object.keys(groupedAppointments).sort();
+
         return (
           <div>
-            <h2 style={styles.sectionTitle}>Agenda Diária</h2>
-            <div style={styles.formGroup}>
-              <label htmlFor="agendaDate" style={styles.label}>Selecionar Data:</label>
-              <input
-                type="date"
-                id="agendaDate"
-                value={agendaDate}
-                onChange={(e) => setAgendaDate(e.target.value)}
-                style={styles.input}
-              />
-            </div>
-            {agendaLoading ? (
+            <h2 style={styles.sectionTitle}>Agenda Semanal</h2>
+            {loading ? (
               <p style={styles.message}>Carregando agenda...</p>
-            ) : agendaError ? (
-              <p style={styles.errorMessage}>{agendaError}</p>
-            ) : agendaAgendamentos.length > 0 ? (
-              <ul style={styles.appointmentList}>
-                {agendaAgendamentos.map(ag => (
-                  <li key={ag.id} style={styles.appointmentItem}>
-                    {new Date(ag.dataHora).toLocaleTimeString()} - {ag.cliente?.nome || 'Cliente Desconhecido'} ({ag.servico}) - {ag.status}
-                  </li>
-                ))}
-              </ul>
+            ) : error ? (
+              <p style={styles.errorMessage}>{error}</p>
+            ) : sortedDates.length > 0 ? (
+              <div>
+                {sortedDates.map(date => {
+                  const dateObj = new Date(date + 'T00:00:00');
+                  const dayName = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+                  const formattedDate = dateObj.toLocaleDateString('pt-BR');
+
+                  return (
+                    <div key={date} style={styles.daySection}>
+                      <h3 style={styles.dayTitle}>
+                        {dayName.charAt(0).toUpperCase() + dayName.slice(1)} - {formattedDate}
+                      </h3>
+                      <ul style={styles.appointmentList}>
+                        {groupedAppointments[date].map(ag => (
+                          <li key={ag.id} style={styles.appointmentItem}>
+                            {new Date(ag.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} - {ag.cliente?.nome || 'Cliente Desconhecido'} ({ag.servico}) - {ag.status}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
             ) : (
-              <p>Nenhum agendamento para esta data.</p>
+              <p>Nenhum agendamento nos próximos 7 dias.</p>
             )}
           </div>
         );
@@ -396,15 +489,28 @@ const Dashboard = () => {
               </div>
               <div style={styles.formGroup}>
                 <label htmlFor="servico" style={styles.label}>Serviço:</label>
-                <input
-                  type="text"
-                  id="servico"
-                  name="servico"
-                  value={newAppointmentData.servico}
-                  onChange={handleNewAppointmentChange}
-                  required
-                  style={styles.input}
-                />
+
+                {servicosLoading ? (
+                  <p>Carregando serviços...</p>
+                ) : servicosError ? (
+                  <p style={styles.errorMessage}>{servicosError}</p>
+                ) : (
+                  <select
+                    id="servico"
+                    name="servico"
+                    value={newAppointmentData.servico}
+                    onChange={handleNewAppointmentChange}
+                    required
+                    style={styles.input}
+                  >
+                    <option value="">Selecione um serviço</option>
+                    {servicos.map(servico => (
+                      <option key={servico.id} value={servico.nome}>
+                        {servico.nome} - R$ {servico.preco}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
               <div style={styles.formGroup}>
                 <label htmlFor="descricao" style={styles.label}>Descrição (Opcional):</label>
@@ -423,6 +529,8 @@ const Dashboard = () => {
             {newAppointmentMessage && <p style={styles.message}>{newAppointmentMessage}</p>}
           </div>
         );
+      case 'gerenciarServicos':
+        return <GerenciarServicos />;
       case 'configuracoesAgenda':
         return (
           <div>
@@ -488,7 +596,7 @@ const Dashboard = () => {
 
 
             {/* Formulário de Alteração de Senha */}
-            <h3 style={{...styles.subSectionTitle, marginTop: '40px'}}>Alterar Senha</h3>
+            <h3 style={{ ...styles.subSectionTitle, marginTop: '40px' }}>Alterar Senha</h3>
             <form onSubmit={handleChangePassword} style={styles.form}>
               <div style={styles.formGroup}>
                 <label htmlFor="currentPassword" style={styles.label}>Senha Atual:</label>
@@ -563,6 +671,9 @@ const Dashboard = () => {
             </li>
             <li style={styles.navItem}>
               <a href="#" style={styles.navLink(activeSection === 'cadastrarAgendamento')} onClick={() => setActiveSection('cadastrarAgendamento')}>Novo Agendamento</a>
+            </li>
+            <li style={styles.navItem}>
+              <a href="#" style={styles.navLink(activeSection === 'gerenciarServicos')} onClick={() => setActiveSection('gerenciarServicos')}>Gerenciar Serviços</a>
             </li>
             <li style={styles.navItem}>
               <a href="#" style={styles.navLink(activeSection === 'configuracoesAgenda')} onClick={() => setActiveSection('configuracoesAgenda')}>Config. Agenda</a>
@@ -704,6 +815,17 @@ const styles = {
     marginBottom: '10px',
     fontSize: '16px',
     color: '#333',
+  },
+  daySection: {
+    marginBottom: '30px',
+    borderBottom: '2px solid #e9ecef',
+    paddingBottom: '15px',
+  },
+  dayTitle: {
+    color: '#007bff',
+    fontSize: '20px',
+    marginBottom: '10px',
+    fontWeight: 'bold' as 'bold',
   },
   formGroup: {
     marginBottom: '20px',
