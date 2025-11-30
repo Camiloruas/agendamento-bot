@@ -24,10 +24,13 @@ const GerenciarServicos = () => {
     const carregarServicos = async () => {
         try {
             setLoading(true);
+            setError('');
             const data = await servicoService.getAllServicos();
             setServicos(data);
         } catch (err: any) {
+            console.error('Erro ao carregar serviços:', err);
             setError(err.message || 'Erro ao carregar serviços');
+            setServicos([]); // Define array vazio em caso de erro
         } finally {
             setLoading(false);
         }
