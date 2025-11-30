@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import agendamentoService from '../services/agendamentoService';
 import clienteService from '../services/clienteService';
-import profissionalService from '../services/profissionalService'; // Importa o serviço de profissional
-import servicoService, { type Servico } from '../services/servicoService'; // Importa o serviço de serviços
+import profissionalService from '../services/profissionalService';
+import servicoService, { type Servico } from '../services/servicoService';
+import GerenciarServicos from '../components/GerenciarServicos';
 
 interface Agendamento {
   id: string;
@@ -166,7 +167,7 @@ const Dashboard = () => {
         setServicosLoading(true);
         setServicosError('');
         try {
-          const data = await servicoService.getAllServices();
+          const data = await servicoService.getAllServicos();
           setServicos(data);
           if (data.length > 0) {
             // Opcional: selecionar o primeiro serviço por padrão
@@ -528,6 +529,8 @@ const Dashboard = () => {
             {newAppointmentMessage && <p style={styles.message}>{newAppointmentMessage}</p>}
           </div>
         );
+      case 'gerenciarServicos':
+        return <GerenciarServicos />;
       case 'configuracoesAgenda':
         return (
           <div>
@@ -668,6 +671,9 @@ const Dashboard = () => {
             </li>
             <li style={styles.navItem}>
               <a href="#" style={styles.navLink(activeSection === 'cadastrarAgendamento')} onClick={() => setActiveSection('cadastrarAgendamento')}>Novo Agendamento</a>
+            </li>
+            <li style={styles.navItem}>
+              <a href="#" style={styles.navLink(activeSection === 'gerenciarServicos')} onClick={() => setActiveSection('gerenciarServicos')}>Gerenciar Serviços</a>
             </li>
             <li style={styles.navItem}>
               <a href="#" style={styles.navLink(activeSection === 'configuracoesAgenda')} onClick={() => setActiveSection('configuracoesAgenda')}>Config. Agenda</a>
