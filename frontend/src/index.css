@@ -1,1 +1,8 @@
-
+/* Light placeholder color for inputs and textareas */
+input::placeholder,
+textarea::placeholder {
+  color: #bbb;
+  /* lighter gray */
+  opacity: 1;
+  /* ensure full opacity */
+}

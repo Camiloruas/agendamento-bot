@@ -228,16 +228,16 @@ const Dashboard = () => {
     return futureAppointments[0] || null;
   };
 
-  // Função para obter agendamentos dos próximos 7 dias
+  // Função para obter agendamentos dos próximos 30 dias
   const getWeekAppointments = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const weekLater = new Date(today);
-    weekLater.setDate(weekLater.getDate() + 7);
+    const monthLater = new Date(today);
+    monthLater.setDate(monthLater.getDate() + 30); // Alterado de 7 para 30 dias
 
     return agendamentos.filter(ag => {
       const agDate = new Date(ag.dataHora);
-      return agDate >= today && agDate < weekLater;
+      return agDate >= today && agDate < monthLater;
     });
   };
 
@@ -401,7 +401,7 @@ const Dashboard = () => {
 
         return (
           <div>
-            <h2 style={styles.sectionTitle}>Agenda Semanal</h2>
+            <h2 style={styles.sectionTitle}>Próximos Agendamentos (30 dias)</h2>
             {loading ? (
               <p style={styles.message}>Carregando agenda...</p>
             ) : error ? (
@@ -430,7 +430,7 @@ const Dashboard = () => {
                 })}
               </div>
             ) : (
-              <p>Nenhum agendamento nos próximos 7 dias.</p>
+              <p>Nenhum agendamento nos próximos 30 dias.</p>
             )}
           </div>
         );

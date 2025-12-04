@@ -65,8 +65,8 @@ Para configurar e executar o projeto em seu ambiente local, siga as instruções
 
 1.  **Clone o repositório:**
     ```bash
-    git clone https://github.com/Camiloruas/portifolio-Single-Page.git # Substitua pelo repositório correto do robô
-    cd portifolio-Single-Page # Navegue até a pasta do projeto
+    git clone https://github.com/Camiloruas/agendamento-bot.git # Substitua pelo repositório correto do robô
+    cd agendamento-bot.git # Navegue até a pasta do projeto
     ```
 2.  **Instale as dependências:**
     ```bash

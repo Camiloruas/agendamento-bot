@@ -24,10 +24,13 @@ const GerenciarServicos = () => {
     const carregarServicos = async () => {
         try {
             setLoading(true);
+            setError('');
             const data = await servicoService.getAllServicos();
             setServicos(data);
         } catch (err: any) {
+            console.error('Erro ao carregar serviços:', err);
             setError(err.message || 'Erro ao carregar serviços');
+            setServicos([]); // Define array vazio em caso de erro
         } finally {
             setLoading(false);
         }
@@ -241,7 +244,7 @@ const GerenciarServicos = () => {
                                 <tr key={servico.id} style={styles.tr}>
                                     <td style={styles.td}>{servico.nome}</td>
                                     <td style={styles.td}>{servico.descricao || '-'}</td>
-                                    <td style={styles.td}>R$ {servico.preco.toFixed(2)}</td>
+                                    <td style={styles.td}>R$ {Number(servico.preco).toFixed(2)}</td>
                                     <td style={styles.td}>{servico.duracao} min</td>
                                     <td style={styles.td}>
                                         <span style={servico.ativo ? styles.statusAtivo : styles.statusInativo}>
