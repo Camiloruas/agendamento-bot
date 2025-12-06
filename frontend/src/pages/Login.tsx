@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import authService from '../services/authService'; // Importe o authService
 import { useNavigate } from 'react-router-dom'; // Importe useNavigate para redirecionamento
+import Footer from '../components/Footer'; // Importe o Footer
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState<string>('');
@@ -34,45 +35,48 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>Login Profissional</h2>
-      <form onSubmit={handleSubmit} style={styles.form}>
-        <div style={styles.formGroup}>
-          <label htmlFor="email" style={styles.label}>Email:</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading} // Desabilita o input durante o loading
-            style={styles.input}
-          />
-        </div>
-        <div style={styles.formGroup}>
-          <label htmlFor="password" style={styles.label}>Senha:</label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={loading} // Desabilita o input durante o loading
-            style={styles.input}
-          />
-        </div>
-        {error && <p style={styles.errorMessage}>{error}</p>}
-        <button type="submit" disabled={loading} style={styles.button}>
-          {loading ? 'Entrando...' : 'Entrar'} {/* Muda o texto do botão durante o loading */}
-        </button>
-      </form>
-      <p style={styles.linkText}>
-        Não tem uma conta? <a href="/register" style={styles.link}>Crie sua conta</a>
-      </p>
-      <p style={styles.linkText}>
-        Esqueceu sua senha? <a href="/forgot-password" style={styles.link}>Recuperar senha</a>
-      </p>
-    </div>
+    <>
+      <div style={styles.container}>
+        <h2 style={styles.title}>Login Profissional</h2>
+        <form onSubmit={handleSubmit} style={styles.form}>
+          <div style={styles.formGroup}>
+            <label htmlFor="email" style={styles.label}>Email:</label>
+            <input
+              type="email"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading} // Desabilita o input durante o loading
+              style={styles.input}
+            />
+          </div>
+          <div style={styles.formGroup}>
+            <label htmlFor="password" style={styles.label}>Senha:</label>
+            <input
+              type="password"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading} // Desabilita o input durante o loading
+              style={styles.input}
+            />
+          </div>
+          {error && <p style={styles.errorMessage}>{error}</p>}
+          <button type="submit" disabled={loading} style={styles.button}>
+            {loading ? 'Entrando...' : 'Entrar'} {/* Muda o texto do botão durante o loading */}
+          </button>
+        </form>
+        <p style={styles.linkText}>
+          Não tem uma conta? <a href="/register" style={styles.link}>Crie sua conta</a>
+        </p>
+        <p style={styles.linkText}>
+          Esqueceu sua senha? <a href="/forgot-password" style={styles.link}>Recuperar senha</a>
+        </p>
+      </div>
+      <Footer />
+    </>
   );
 };
 
@@ -83,23 +87,27 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '100vh',
-    backgroundColor: '#f0f2f5',
+    backgroundColor: '#1a1f2e',
     padding: '20px',
+    paddingBottom: '80px', // Espaço para o footer fixo
     fontFamily: 'Arial, sans-serif',
   },
   title: {
-    color: '#333',
+    color: '#ffffff',
     marginBottom: '30px',
+    fontSize: '32px',
+    fontWeight: 'bold',
   },
   form: {
-    backgroundColor: '#fff',
+    backgroundColor: '#141824',
     padding: '40px',
-    borderRadius: '8px',
-    boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+    borderRadius: '12px',
+    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.5)',
     width: '100%',
     maxWidth: '400px',
     display: 'flex',
     flexDirection: 'column' as 'column',
+    border: 'none',
   },
   formGroup: {
     marginBottom: '20px',
@@ -107,15 +115,17 @@ const styles = {
   label: {
     display: 'block',
     marginBottom: '8px',
-    color: '#555',
+    color: '#e0e0e0',
     fontWeight: 'bold',
   },
   input: {
     width: 'calc(100% - 22px)', // Adjusted for padding and border
     padding: '10px',
-    border: '1px solid #ddd',
+    border: '1px solid #2a3142',
     borderRadius: '4px',
     fontSize: '16px',
+    backgroundColor: '#1f2533',
+    color: '#ffffff',
   },
   button: {
     backgroundColor: '#007bff',
@@ -129,16 +139,16 @@ const styles = {
     transition: 'background-color 0.3s ease',
   },
   errorMessage: {
-    color: '#dc3545',
+    color: '#ff4444',
     marginTop: '10px',
     textAlign: 'center' as 'center',
   },
   linkText: {
     marginTop: '15px',
-    color: '#555',
+    color: '#b0b0b0',
   },
   link: {
-    color: '#007bff',
+    color: '#4da6ff',
     textDecoration: 'none',
   },
 };
